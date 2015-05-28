@@ -1,8 +1,9 @@
 
 all:	helloWorld lazyVector \
 	protofyingIntArray3 protofyingStdVector \
-	protofyingArrayHeap protofyingArrayWrapper protofyingStdVectorWrapper \
-	vectorAdaptingNonProtoTermType adaptingArrayWrapper
+	protofyingArrayWrapper protofyingStdVectorWrapper \
+	vectorAdaptingNonProtoTermType adaptingArrayWrapper \
+	adaptingMatrixWithAutoArray2x2
 
 helloWorld : helloWorld.cpp
 	${CXX} $< -o $@
@@ -26,4 +27,7 @@ vectorAdaptingNonProtoTermType : vectorAdaptingNonProtoTermType.cpp
 	${CXX} $< -o $@
 
 adaptingArrayWrapper : adaptingArrayWrapper.cpp
+	${CXX} $< -o $@
+
+adaptingMatrixWithAutoArray2x2 : adaptingMatrixWithAutoArray2x2.cpp
 	${CXX} $< -o $@
