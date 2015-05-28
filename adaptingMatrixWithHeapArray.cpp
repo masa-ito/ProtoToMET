@@ -10,6 +10,8 @@
 //   Presented by k.inaba (kiki .a.t. kmonos.net)
 //   under Creative Commons 0 1.0.
 //  http://creativecommons.org/publicdomain/zero/1.0/
+//
+// The Marix class definition was modified.
 
 #include <iostream>
 #include <boost/proto/proto.hpp>
@@ -75,7 +77,7 @@ namespace ETSample
 	};
 
 	//
-	// Matrix data are stored in an auto array.
+	// Matrix data are stored in an heap array.
 	//
 	class Matrix
 	{
