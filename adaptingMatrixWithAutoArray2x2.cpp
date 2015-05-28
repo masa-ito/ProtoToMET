@@ -10,6 +10,8 @@
 //   Presented by k.inaba (kiki .a.t. kmonos.net)
 //   under Creative Commons 0 1.0.
 //  http://creativecommons.org/publicdomain/zero/1.0/
+//
+// The comment lines were translated into English.
 
 #include <iostream>
 #include <boost/proto/proto.hpp>
