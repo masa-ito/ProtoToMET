@@ -92,6 +92,8 @@ namespace ETSample
 			data( new double[rowSize*colSize] ),
 			m( new double*[rowSize]) {
 			for (int i = 0; i < rowSize; i++) m[i] = data + i*colSize;
+			for (int ri = 0; ri < rowSize; ri++)
+				for (int ci = 0; ci < colSize; ci++) m[ri][ci] = iniVal;
 			std::cout << "Created" << std::endl;
 		}
 		Matrix(const Matrix& mat) :
@@ -118,8 +120,8 @@ namespace ETSample
 		template<typename Expr>
 		Matrix& operator=( const Expr& expr )
 		{
-			for(int i=0; i<2; ++i)
-				for(int j=0; j<2; ++j) {
+			for(int i=0; i< rowSize; ++i)
+				for(int j=0; colSize; ++j) {
 					// evaluating the (i,j) element of a matrix expression
 					const EvalCtxByIndex ctx(i, j);
 					m[i][j] = proto::eval(proto::as_expr<MatrixDomain>(expr), ctx);
