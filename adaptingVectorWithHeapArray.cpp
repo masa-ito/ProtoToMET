@@ -11,11 +11,15 @@
 namespace mpl = boost::mpl;
 namespace proto = boost::proto;
 
+
+class Vector;
+
 // This grammar describes which vector expressions
 // are allowed; namely, vector terminals and addition
 // and subtraction of vector expressions.
 struct VecGrammar : proto::or_<
-	proto::terminal< proto::_ >,
+	// proto::terminal< proto::_ >,
+	proto::terminal< Vector >,
 	proto::plus< VecGrammar, VecGrammar>,
 	proto::minus< VecGrammar, VecGrammar>
 > {};
