@@ -26,15 +26,6 @@ template<typename Expr> struct VecExpr;
 struct VecDomain
 	: proto::domain<proto::generator<VecExpr>, VecGrammar> {};
 
-//
-// Vector Expression Templates
-//
-template<typename Expr>
-struct VecExpr
-	: proto::extends<Expr, VecExpr<Expr>, VecDomain> {
-		explicit VecExpr(const Expr& e)
-			: proto::extends<Expr, VecExpr<Expr>, VecDomain>(e) {}
-};
 
 //
 // Context for evaluating an element of matrix expressions
@@ -62,6 +53,26 @@ struct SubscriptCntxt
 		template<typename E1, typename E2>
 		double operator()(proto::tag::minus, const E1& e1, const E2& e2) const {
 			return proto::eval(e1, *this) - proto::eval(e2, *this);
+		}
+};
+
+
+//
+// Vector Expression Templates
+//
+template<typename Expr>
+struct VecExpr
+	: proto::extends<Expr, VecExpr<Expr>, VecDomain> {
+		explicit VecExpr(const Expr& e)
+			: proto::extends<Expr, VecExpr<Expr>, VecDomain>(e) {
+		}
+
+		// Use a SubscriptCntxt instance to implement subscripting
+		// of a vector expression tree.
+		typename proto::result_of::eval< Expr, SubscriptCntxt>::type
+		operator [](int i) const {
+			const SubscriptCntxt ctx(i);
+			return proto::eval(*this, ctx);
 		}
 };
 
@@ -127,7 +138,7 @@ template<> struct IsVector<Vector> : mpl::true_  {};
 
 namespace VectorOps {
 	// This defines all the overloads to make expressions involving
-	// std::vector to build expression templates.
+	// Vector objects to build expression templates.
 	BOOST_PROTO_DEFINE_OPERATORS(IsVector, VecDomain)
 }
 
@@ -136,12 +147,10 @@ int main()
 	using namespace VectorOps;
 
     // lazy_vectors with 4 elements each.
-    Vector v1( 4, 1.0 ), v2( 4, 2.0 ), v3( 4, 3.0 ), d(4);
+    Vector v1( 4, 1.0 ), v2( 4, 2.0 ), v3( 4, 3.0 );
 
     // Add two vectors lazily and get the 2nd element.
-    d = v2 + v3 ;
-    double d1 = d[ 2 ];
-    // double d1 = ( v2 + v3 )[ 2 ];   // Look ma, no temporaries!
+    double d1 = ( v2 + v3 )[ 2 ];   // Look ma, no temporaries!
     std::cout << d1 << std::endl;
 
     // Subtract two vectors and add the result to a third vector.
