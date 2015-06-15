@@ -136,8 +136,7 @@ namespace ETSample
 	BOOST_PROTO_DEFINE_OPERATORS(IsMatrix, MatrixDomain)
 }
 
-int main()
-{
+int main() {
 	ETSample::Matrix m( 2, 2, 0.0);
 	m(0,0) = 1;
 	m(0,1) = 2;

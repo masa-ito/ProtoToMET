@@ -32,7 +32,7 @@ struct VecDomain
 
 
 //
-// Context for evaluating an element of matrix expressions
+// Context for evaluating an element of vector expressions
 //
 struct SubscriptCntxt
 	: proto::callable_context<const SubscriptCntxt> {
@@ -41,7 +41,7 @@ struct SubscriptCntxt
 		int index;
 		SubscriptCntxt(int index_) :  index(index_) {}
 
-		// matrix element
+		// vector element
 		template<typename Vector>
 		double operator()(proto::tag::terminal, const Vector& vec) const {
 			return vec[index];
@@ -81,7 +81,7 @@ struct VecExpr
 };
 
 //
-// Matrix data are stored in an heap array.
+// Vector data are stored in an heap array.
 //
 class Vector {
 	private:
@@ -109,18 +109,18 @@ public:
 	double& operator[](int i) { return data[i]; }
 	const double& operator[](int i) const { return data[i]; }
 
-	// assigning the lhs of a vector expression into this matrix
+	// assigning the lhs of a vector expression into this vector
 	template<typename Expr>
 	Vector& operator=( const Expr& expr ) {
 		for(int i=0; i < sz; ++i) {
-				// evaluating the i'th element of a matrix expression
+				// evaluating the i'th element of a vector expression
 				const SubscriptCntxt ctx(i);
 				data[i] = proto::eval(proto::as_expr<VecDomain>(expr), ctx);
 		}
 		return *this;
 	}
 
-	// assigning and adding the lhs of a vector expression into this matrix
+	// assigning and adding the lhs of a vector expression into this vector
 	template<typename Expr>
 	Vector& operator+=( const Expr& expr ) {
 		for(int i=0; i < sz; ++i) {
