@@ -14,59 +14,29 @@ namespace proto = boost::proto;
 
 class Vector;
 
-struct IndxDist : proto::or_<
+struct IndDist : proto::or_<
 	proto::when< proto::terminal< Vector>,
 				proto::_make_subscript( proto::_, proto::_state) >,
 	proto::terminal< Vector >,
-	proto::plus< IndxDist, IndxDist>,
-	proto::minus< IndxDist, IndxDist>
+	proto::plus< IndDist, IndDist> ,
+	proto::minus< IndDist, IndDist>
 > {};
 
 // This grammar describes which vector expressions
 // are allowed.
-struct VecGrammar : proto::or_<
-	proto::when< proto::subscript< IndxDist, proto::terminal< Vector> >,
-				IndxDist(proto::_left, proto::_right) >,
+struct VecExprOpt : proto::or_<
+	proto::when< proto::subscript< IndDist, proto::terminal< Vector> >,
+				IndDist(proto::_left, proto::_right) >,
 	proto::terminal< Vector >,
-	proto::plus< VecGrammar, VecGrammar>,
-	proto::minus< VecGrammar, VecGrammar>
+	proto::plus< VecExprOpt, VecExprOpt> ,
+	proto::minus< VecExprOpt, VecExprOpt>
 > {};
 
 
 // The above grammar is associated with this domain.
 template<typename Expr> struct VecExpr;
 struct VecDomain
-	: proto::domain<proto::generator<VecExpr>, VecGrammar> {};
-
-
-//
-// Context for evaluating an element of vector expressions
-//
-struct SubscriptCntxt
-	: proto::callable_context<const SubscriptCntxt> {
-		typedef double result_type;
-
-		int index;
-		SubscriptCntxt(int index_) :  index(index_) {}
-
-		// vector element
-		template<typename Vector>
-		double operator()(proto::tag::terminal, const Vector& vec) const {
-			return vec[index];
-		}
-
-		// addition of vector expression terms
-		template<typename E1, typename E2>
-		double operator()(proto::tag::plus, const E1& e1, const E2& e2) const {
-			return proto::eval(e1, *this) + proto::eval(e2, *this);
-		}
-
-		// substraction of vector expression terms
-		template<typename E1, typename E2>
-		double operator()(proto::tag::minus, const E1& e1, const E2& e2) const {
-			return proto::eval(e1, *this) - proto::eval(e2, *this);
-		}
-};
+	: proto::domain<proto::generator<VecExpr>, VecExprOpt> {};
 
 
 //
@@ -79,12 +49,11 @@ struct VecExpr
 			: proto::extends<Expr, VecExpr<Expr>, VecDomain>(e) {
 		}
 
-		// Use a SubscriptCntxt instance to implement subscripting
-		// of a vector expression tree.
-		typename proto::result_of::eval< Expr, SubscriptCntxt>::type
-		operator [](int i) const {
-			const SubscriptCntxt ctx(i);
-			return proto::eval(*this, ctx);
+		const double& operator [](int i) const {
+			proto::_default<> trans;
+			std::cout << "VecExpr const double& operator [](int i) const used." << std::endl;
+			return trans( VecExprOpt()(  proto::as_expr<VecDomain>( (*this)[i] )  ) );
+			// return (*this)[i];
 		}
 };
 
@@ -120,22 +89,20 @@ public:
 	// assigning the lhs of a vector expression into this vector
 	template<typename Expr>
 	Vector& operator=( const Expr& expr ) {
-		for(int i=0; i < sz; ++i) {
-				// evaluating the i'th element of a vector expression
-				const SubscriptCntxt ctx(i);
-				data[i] = proto::eval(proto::as_expr<VecDomain>(expr), ctx);
-		}
+		proto::_default<> trans;
+		for(int i=0; i < sz; ++i)
+			data[i] = trans( VecExprOpt()( expr[i] ) );
 		return *this;
 	}
 
 	// assigning and adding the lhs of a vector expression into this vector
 	template<typename Expr>
 	Vector& operator+=( const Expr& expr ) {
-		for(int i=0; i < sz; ++i) {
-				// evaluating the (i,j) element of a matrix expression
-				const SubscriptCntxt ctx(i);
-				data[i] += proto::eval(proto::as_expr<VecDomain>(expr), ctx);
-		}
+		proto::_default<> trans;
+		for(int i=0; i < sz; ++i)
+			data[i] += expr[i];
+			//data[i] += trans( VecExprOpt()( expr[i] ) );
+		std::cout << "Vector& operator+= done." << std::endl;
 		return *this;
 	}
 };
@@ -163,12 +130,13 @@ int main()
 
     // Add two vectors lazily and get the 2nd element.
     double d1 = ( v2 + v3 )[ 2 ];   // Look ma, no temporaries!
+    //double d1 = v2[2] + v3[2];   // Look ma, no temporaries!
     std::cout << d1 << std::endl;
 
     // Subtract two vectors and add the result to a third vector.
-    v1 += v2 - v3;                  // Still no temporaries!
+    /* v1 += v2 - v3;                  // Still no temporaries!
     std::cout << '{' << v1[0] << ',' << v1[1]
-              << ',' << v1[2] << ',' << v1[3] << '}' << std::endl;
+              << ',' << v1[2] << ',' << v1[3] << '}' << std::endl; */
 
     // This expression is disallowed because it does not conform
     // to the LazyVectorGrammar

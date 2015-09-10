@@ -4,8 +4,8 @@ all:	helloWorld lazyVector \
 	protofyingArrayWrapper protofyingStdVectorWrapper \
 	vectorAdaptingNonProtoTermType adaptingArrayWrapper \
 	adaptingMatrixWithAutoArray2x2 adaptingMatrixWithHeapArray \
-	adaptingVectorWithHeapArray \
-	linAlgAdd
+	adaptingVectorWithHeapArray transformingVectorOnHeapArray \
+	linAlgAdd linAlgResid
 
 helloWorld : helloWorld.cpp
 	${CXX} $< -o $@
@@ -41,5 +41,12 @@ adaptingMatrixWithHeapArray : adaptingMatrixWithHeapArray.cpp
 adaptingVectorWithHeapArray : adaptingVectorWithHeapArray.cpp
 	${CXX} $< -o $@
 
+transformingVectorOnHeapArray : transformingVectorOnHeapArray.cpp
+	${CXX} $< -o $@
+
 linAlgAdd : linAlgAdd.cpp
 	${CXX} $< -o $@
+
+linAlgResid : linAlgResid.cpp
+	${CXX} $< -o $@
+
