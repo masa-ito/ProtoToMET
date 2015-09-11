@@ -7,6 +7,8 @@ all:	helloWorld lazyVector \
 	adaptingVectorWithHeapArray transformingVectorOnHeapArray \
 	linAlgAdd linAlgResid
 
+CPP11STD = -std=c++11
+
 helloWorld : helloWorld.cpp
 	${CXX} $< -o $@
 #	 ${CXX} helloWorld.cpp -o helloWorld	
@@ -42,7 +44,7 @@ adaptingVectorWithHeapArray : adaptingVectorWithHeapArray.cpp
 	${CXX} $< -o $@
 
 transformingVectorOnHeapArray : transformingVectorOnHeapArray.cpp
-	${CXX} $< -o $@
+	${CXX} ${CPP11STD} $< -o $@
 
 linAlgAdd : linAlgAdd.cpp
 	${CXX} $< -o $@

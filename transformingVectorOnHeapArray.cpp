@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+#include <type_traits>
 #include <boost/proto/proto.hpp>
 
 namespace mpl = boost::mpl;
@@ -114,12 +115,26 @@ template<typename> struct IsVector : mpl::false_ {};
 template<> struct IsVector<Vector> : mpl::true_  {};
 
 
-
 namespace VectorOps {
 	// This defines all the overloads to make expressions involving
 	// Vector objects to build expression templates.
 	BOOST_PROTO_DEFINE_OPERATORS(IsVector, VecDomain)
 }
+
+template <typename SyntaxRule>
+struct ExpressionSyntaxChecker
+{
+	template <class Expr>
+	void operator ()(Expr const & expr) const {
+		static_assert(
+				proto::matches<Expr, SyntaxRule>::value,
+				"The expression does not match to the syntax rule!"
+		);
+		proto::display_expr( expr );
+		std::cout << std::endl;
+	}
+};
+
 
 int main()
 {
@@ -129,10 +144,15 @@ int main()
     Vector v1( 4, 1.0 ), v2( 4, 2.0 ), v3( 4, 3.0 );
 
     // Add two vectors lazily and get the 2nd element.
-    // Checking if code optimization works properly.
-    proto::display_expr( v2 + v3 );
-    proto::display_expr( ( v2 + v3 )[2] );
-    proto::display_expr( VecExprOpt()( ( v2 + v3 )[ 2 ] ) );
+    std::cout << "Does v2 + v3 match to VecExprOpt rule?" << std::endl;
+    ExpressionSyntaxChecker< VecExprOpt >()( v2 + v3 );
+
+    std::cout << "Does (v2 + v3)[2] match to VecExprOpt rule?" << std::endl;
+    ExpressionSyntaxChecker< VecExprOpt >()( ( v2 + v3 )[2] );
+
+    // std::cout << "Does  VecExprOpt()( ( v2 + v3 )[ 2 ] match to VecExprOpt rule?" << std::endl;
+    // ExpressionSyntaxChecker< VecExprOpt >()( ( v2 + v3 )[ 2 ] ) );
+
     // double d1 = ( v2 + v3 )[ 2 ];   // Look ma, no temporaries!
     //double d1 = v2[2] + v3[2];   // Look ma, no temporaries!
     // std::cout << d1 << std::endl;
