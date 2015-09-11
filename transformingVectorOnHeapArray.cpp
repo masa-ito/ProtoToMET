@@ -151,7 +151,7 @@ int main()
     ExpressionSyntaxChecker< VecExprOpt >()( ( v2 + v3 )[2] );
 
     std::cout << "Does  VecExprOpt()( ( v2 + v3 )[ 2 ] match to VecExprOpt rule?" << std::endl;
-    ExpressionSyntaxChecker< VecExprOpt >()( ( v2 + v3 )[ 2 ] ) );
+    ExpressionSyntaxChecker< VecExprOpt >()( ( v2 + v3 )[ 2 ] );
 
     // double d1 = ( v2 + v3 )[ 2 ];   // Look ma, no temporaries!
     //double d1 = v2[2] + v3[2];   // Look ma, no temporaries!
