@@ -15,19 +15,19 @@ namespace proto = boost::proto;
 
 class Vector;
 
-struct IndDist : proto::or_<
+struct IndxDist : proto::or_<
 	proto::when< proto::terminal< Vector>,
 				proto::_make_subscript( proto::_, proto::_state) >,
 	proto::terminal< Vector >,
-	proto::plus< IndDist, IndDist> ,
-	proto::minus< IndDist, IndDist>
+	proto::plus< IndxDist, IndxDist> ,
+	proto::minus< IndxDist, IndxDist>
 > {};
 
 // This grammar describes which vector expressions
 // are allowed.
 struct VecExprOpt : proto::or_<
-	proto::when< proto::subscript< IndDist, proto::_ >,
-				IndDist(proto::_left, proto::_right) >,
+	proto::when< proto::subscript< IndxDist, proto::_ >,
+				IndxDist(proto::_left, proto::_right) >,
 	proto::terminal< Vector >,
 	proto::plus< VecExprOpt, VecExprOpt> ,
 	proto::minus< VecExprOpt, VecExprOpt>
@@ -49,13 +49,6 @@ struct VecExpr
 		explicit VecExpr(const Expr& e)
 			: proto::extends<Expr, VecExpr<Expr>, VecDomain>(e) {
 		}
-
-//		const double& operator [](int i) const {
-//			proto::_default<> trans;
-//			std::cout << "const double& VecExpr<Expr>::operator [](int i) const used." << std::endl;
-//			return trans( VecExprOpt()(  proto::as_expr<VecDomain>( (*this)[i] )  ) );
-//			// return (*this)[i];
-//		}
 };
 
 //
@@ -101,9 +94,8 @@ public:
 	Vector& operator+=( const Expr& expr ) {
 		proto::_default<> trans;
 		for(int i=0; i < sz; ++i)
-			data[i] += expr[i];
-			//data[i] += trans( VecExprOpt()( expr[i] ) );
-		std::cout << "Vector& operator+= done." << std::endl;
+			data[i] += trans( VecExprOpt()( expr[i] ) );
+		// std::cout << "Vector& operator+= done." << std::endl;
 		return *this;
 	}
 };
@@ -144,23 +136,26 @@ int main()
     Vector v1( 4, 1.0 ), v2( 4, 2.0 ), v3( 4, 3.0 );
 
     // Add two vectors lazily and get the 2nd element.
-    std::cout << "Does v2 + v3 match to VecExprOpt rule?" << std::endl;
+    std::cout << "Checking if v2 + v3 matches to VecExprOpt rule ..." << std::endl;
     ExpressionSyntaxChecker< VecExprOpt >()( v2 + v3 );
 
-    std::cout << "Does (v2 + v3)[2] match to VecExprOpt rule?" << std::endl;
+    std::cout << "Checking if (v2 + v3)[2] matches to VecExprOpt rule ..." << std::endl;
     ExpressionSyntaxChecker< VecExprOpt >()( ( v2 + v3 )[2] );
 
-    std::cout << "Does  VecExprOpt()( ( v2 + v3 )[ 2 ] match to VecExprOpt rule?" << std::endl;
-    ExpressionSyntaxChecker< VecExprOpt >()( ( v2 + v3 )[ 2 ] );
+    std::cout << "Checking if VecExprOpt()( ( v2 + v3 )[ 2 ] )";
+    std::cout << " matches to VecExprOpt rule ..." << std::endl;
+    ExpressionSyntaxChecker< VecExprOpt >()( VecExprOpt()( ( v2 + v3 )[ 2 ] ) );
 
-    // double d1 = ( v2 + v3 )[ 2 ];   // Look ma, no temporaries!
-    //double d1 = v2[2] + v3[2];   // Look ma, no temporaries!
-    // std::cout << d1 << std::endl;
+    proto::_default<> trans;
+    double d1 = trans( VecExprOpt()( ( v2 + v3 )[ 2 ] ) );   // Look ma, no temporaries!
+    std::cout << "( v2 + v3 )[ 2 ] = " << d1 << std::endl;
 
     // Subtract two vectors and add the result to a third vector.
-    /* v1 += v2 - v3;                  // Still no temporaries!
+    v1 += v2 - v3;                  // Still no temporaries!
+    std::cout << "v1 += v2 - v3" << std::endl;
+    std::cout << "v1 =";
     std::cout << '{' << v1[0] << ',' << v1[1]
-              << ',' << v1[2] << ',' << v1[3] << '}' << std::endl; */
+              << ',' << v1[2] << ',' << v1[3] << '}' << std::endl;
 
     // This expression is disallowed because it does not conform
     // to the LazyVectorGrammar
