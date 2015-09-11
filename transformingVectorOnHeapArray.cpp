@@ -26,7 +26,7 @@ struct IndDist : proto::or_<
 // This grammar describes which vector expressions
 // are allowed.
 struct VecExprOpt : proto::or_<
-	proto::when< proto::subscript< IndDist, proto::terminal< Vector> >,
+	proto::when< proto::subscript< IndDist, proto::_ >,
 				IndDist(proto::_left, proto::_right) >,
 	proto::terminal< Vector >,
 	proto::plus< VecExprOpt, VecExprOpt> ,
@@ -150,8 +150,8 @@ int main()
     std::cout << "Does (v2 + v3)[2] match to VecExprOpt rule?" << std::endl;
     ExpressionSyntaxChecker< VecExprOpt >()( ( v2 + v3 )[2] );
 
-    // std::cout << "Does  VecExprOpt()( ( v2 + v3 )[ 2 ] match to VecExprOpt rule?" << std::endl;
-    // ExpressionSyntaxChecker< VecExprOpt >()( ( v2 + v3 )[ 2 ] ) );
+    std::cout << "Does  VecExprOpt()( ( v2 + v3 )[ 2 ] match to VecExprOpt rule?" << std::endl;
+    ExpressionSyntaxChecker< VecExprOpt >()( ( v2 + v3 )[ 2 ] ) );
 
     // double d1 = ( v2 + v3 )[ 2 ];   // Look ma, no temporaries!
     //double d1 = v2[2] + v3[2];   // Look ma, no temporaries!
