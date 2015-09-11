@@ -130,6 +130,7 @@ int main()
 
     // Add two vectors lazily and get the 2nd element.
     // Checking if code optimization works properly.
+    proto::display_expr( v2 + v3 );
     proto::display_expr( proto::as_expr<VecDomain>( ( v2 + v3 )[ 2 ] ) );
     // double d1 = ( v2 + v3 )[ 2 ];   // Look ma, no temporaries!
     //double d1 = v2[2] + v3[2];   // Look ma, no temporaries!
