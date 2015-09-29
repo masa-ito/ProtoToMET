@@ -15,10 +15,11 @@ namespace proto = boost::proto;
 
 class Vector;
 
+// This transform accepts a subscript index  of an expression being parsed
+// as the state variable,and distribute that index over the child nodes.
 struct IndxDist : proto::or_<
 	proto::when< proto::terminal< Vector>,
 				proto::_make_subscript( proto::_, proto::_state) >,
-	proto::terminal< Vector >,
 	proto::plus< IndxDist, IndxDist> ,
 	proto::minus< IndxDist, IndxDist>
 > {};
