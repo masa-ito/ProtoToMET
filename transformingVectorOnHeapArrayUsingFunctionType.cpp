@@ -17,28 +17,28 @@ class Vector;
 
 // This transform accepts a subscript index  of an expression being parsed
 // as the state variable,and distribute that index over the child nodes.
-struct IndxDist : proto::or_<
+struct VecElmTrans : proto::or_<
 	proto::when< proto::terminal< Vector>,
 				proto::_make_function( proto::_, proto::_state) >,
-	proto::plus< IndxDist, IndxDist> ,
-	proto::minus< IndxDist, IndxDist>
+	proto::plus< VecElmTrans, VecElmTrans> ,
+	proto::minus< VecElmTrans, VecElmTrans>
 > {};
 
 // This grammar describes which vector expressions
 // are allowed.
-struct VecExprOpt : proto::or_<
-	proto::when< proto::function< IndxDist, proto::_ >,
-				IndxDist(proto::_left, proto::_right) >,
+struct VecExprTrans : proto::or_<
+	proto::when< proto::function< VecElmTrans, proto::_ >,
+				VecElmTrans(proto::_left, proto::_right) >,
 	proto::terminal< Vector >,
-	proto::plus< VecExprOpt, VecExprOpt> ,
-	proto::minus< VecExprOpt, VecExprOpt>
+	proto::plus< VecExprTrans, VecExprTrans> ,
+	proto::minus< VecExprTrans, VecExprTrans>
 > {};
 
 
 // The above grammar is associated with this domain.
 template<typename Expr> struct VecExpr;
 struct VecDomain
-	: proto::domain<proto::generator<VecExpr>, VecExprOpt> {};
+	: proto::domain<proto::generator<VecExpr>, VecExprTrans> {};
 
 
 //
@@ -92,7 +92,7 @@ public:
 	Vector& operator=( const Expr& expr ) {
 		proto::_default<> trans;
 		for(int i=0; i < sz; ++i)
-			data[i] = trans( VecExprOpt()( expr(i) ) );
+			data[i] = trans( VecExprTrans()( expr(i) ) );
 		return *this;
 	}
 
@@ -101,7 +101,7 @@ public:
 	Vector& operator+=( const Expr& expr ) {
 		proto::_default<> trans;
 		for(int i=0; i < sz; ++i)
-			data[i] += trans( VecExprOpt()( expr(i) ) );
+			data[i] += trans( VecExprTrans()( expr(i) ) );
 		// std::cout << "Vector& operator+= done." << std::endl;
 		return *this;
 	}
@@ -145,19 +145,19 @@ int main()
     // Add two vectors lazily and get the 2nd element.
     std::cout << "Checking if v2 + v3 matches to VecExprOpt rule ..."
     		<< std::endl;
-    ExpressionSyntaxChecker< VecExprOpt >()( v2 + v3 );
+    ExpressionSyntaxChecker< VecExprTrans >()( v2 + v3 );
 
     std::cout << "Checking if (v2 + v3)[2] matches to VecExprOpt rule ..."
     		<< std::endl;
-    ExpressionSyntaxChecker< VecExprOpt >()( ( v2 + v3 )( 2 ) );
+    ExpressionSyntaxChecker< VecExprTrans >()( ( v2 + v3 )( 2 ) );
 
     std::cout << "Checking if VecExprOpt()( ( v2 + v3 )( 2 ) )";
     std::cout << " matches to VecExprOpt rule ..." << std::endl;
-    ExpressionSyntaxChecker< VecExprOpt >()( VecExprOpt()( ( v2 + v3 )( 2 ) ) );
+    ExpressionSyntaxChecker< VecExprTrans >()( VecExprTrans()( ( v2 + v3 )( 2 ) ) );
 
     proto::_default<> trans;
     // Look ma, no temporaries!
-    double d1 = trans( VecExprOpt()( ( v2 + v3 )( 2 ) ) );
+    double d1 = trans( VecExprTrans()( ( v2 + v3 )( 2 ) ) );
     std::cout << "( v2 + v3 )( 2 ) = " << d1 << std::endl;
 
     // Subtract two vectors and add the result to a third vector.

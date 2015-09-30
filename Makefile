@@ -5,9 +5,11 @@ all:	helloWorld lazyVector \
 	vectorAdaptingNonProtoTermType adaptingArrayWrapper \
 	adaptingMatrixWithAutoArray2x2 adaptingMatrixWithHeapArray \
 	adaptingVectorWithHeapArray transformingVectorOnHeapArray \
+	linAlgAdd \
 	transformingVectorOnHeapArrayUsingFunctionType \
 	transformingMatrixWithHeapArray \
-	linAlgAdd linAlgResid
+	transformingMatrixVectorMultiplication
+
 
 CPP11STD = -std=c++11
 
@@ -45,6 +47,12 @@ adaptingMatrixWithHeapArray : adaptingMatrixWithHeapArray.cpp
 adaptingVectorWithHeapArray : adaptingVectorWithHeapArray.cpp
 	${CXX} $< -o $@
 
+linAlgAdd : linAlgAdd.cpp
+	${CXX} $< -o $@
+
+# linAlgResid : linAlgResid.cpp
+# 	${CXX} $< -o $@
+
 transformingVectorOnHeapArray : transformingVectorOnHeapArray.cpp
 	${CXX} ${CPP11STD} $< -o $@
 
@@ -54,9 +62,5 @@ transformingVectorOnHeapArrayUsingFunctionType : transformingVectorOnHeapArrayUs
 transformingMatrixWithHeapArray : transformingMatrixWithHeapArray.cpp
 	${CXX} ${CPP11STD} $< -o $@
 
-linAlgAdd : linAlgAdd.cpp
-	${CXX} $< -o $@
-
-linAlgResid : linAlgResid.cpp
-	${CXX} $< -o $@
-
+transformingMatrixVectorMultiplication : transformingMatrixVectorMultiplication.cpp
+	${CXX} ${CPP11STD} $< -o $@
