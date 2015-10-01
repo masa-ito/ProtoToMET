@@ -8,6 +8,7 @@ all:	helloWorld lazyVector \
 	linAlgAdd \
 	transformingVectorOnHeapArrayUsingFunctionType \
 	transformingMatrixWithHeapArray \
+	transformingMatrixAndVector \
 	transformingMatrixVectorMultiplication
 
 
@@ -60,6 +61,9 @@ transformingVectorOnHeapArrayUsingFunctionType : transformingVectorOnHeapArrayUs
 	${CXX} ${CPP11STD} $< -o $@
 
 transformingMatrixWithHeapArray : transformingMatrixWithHeapArray.cpp
+	${CXX} ${CPP11STD} $< -o $@
+
+transformingMatrixAndVector : transformingMatrixAndVector.cpp
 	${CXX} ${CPP11STD} $< -o $@
 
 transformingMatrixVectorMultiplication : transformingMatrixVectorMultiplication.cpp
