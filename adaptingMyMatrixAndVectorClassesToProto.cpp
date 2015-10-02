@@ -38,6 +38,8 @@ namespace LinAlg {
 	> {};
 
 
+	// struct Domain : proto::domain<> {};
+
 	template<typename E> struct Expr;
 
 	// The above grammar is associated with this domain.
@@ -47,19 +49,19 @@ namespace LinAlg {
 
 	// A wrapper template for linear algebraic expressions
 	// including matrices and vectors
-	template<typename E>
+	template<typename ExprType>
 	struct Expr
-		: proto::extends<E, Expr<E>, Domain>
+		: proto::extends<ExprType, Expr<ExprType>, Domain>
 	{
-		explicit Expr(const E& e)
-			: proto::extends<E, Expr<Expr>, Domain>(e)
+		explicit Expr(const ExprType& e)
+			: proto::extends<ExprType, Expr<ExprType>, Domain>(e)
 		{}
 
-		typedef double result_type;
+		// typedef double result_type;
 	};
 
 
-	// Vector data are stored in an heap array.
+	// Testing if data in an heap array can be a vector object
 	class Vector {
 		private:
 			int sz;
@@ -93,18 +95,18 @@ namespace LinAlg {
 		double& operator()(int i) { return data[i]; }
 		const double& operator()(int i) const { return data[i]; }
 
-		// assigning the lhs of a vector expression into this vector
+		/* // assigning the lhs of a vector expression into this vector
 		template<typename Expr>
 		Vector& operator=( const Expr& expr ) {
 			proto::_default<> trans;
 			for(int i=0; i < sz; ++i)
-				data[i] = trans( VecExprGrammar( expr(i) ) );
+				data[i] = trans( VecExprGrammar()( expr(i) ) );
 			return *this;
-		}
+		} */
 	};
 
 
-	// Matrix data are stored in an heap array.
+	// Testing if data in an heap array can be a matrix object
 	class Matrix
 	{
 	private:
@@ -190,15 +192,31 @@ namespace LinAlg {
 }
 
 
+
 int main()
 {
 	using namespace LinAlg;
 
+	proto::_default<> trans;
+
     Matrix mat( 3, 3);
     Vector vec1(3), vec2(3);
 
+    mat(0,0) = 1.00; mat(0,1) = 1.01; mat(0,2) = 1.02;
+    mat(1,0) = 1.10; mat(1,1) = 1.11; mat(1,2) = 1.12;
+    mat(2,0) = 1.20; mat(2,1) = 1.21; mat(2,2) = 1.22;
+
+    vec1(0) = 1.0;
+    vec1(1) = 2.0;
+    vec1(2) = 3.0;
+
+    proto::display_expr( ( mat * vec1)(2) );
+    proto::display_expr( VecExprGrammar()( ( mat * vec1)(2) );
+    // double elm2 = trans( VecExprGrammar()( ( mat * vec1)(2) );
+
     // Let's see if any temporary oject is copied !
-    vec2 = mat * vec1;
+    // vec2 = proto::as_expr(mat * vec1);
+
 	return 0;
 }
 
