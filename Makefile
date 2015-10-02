@@ -11,7 +11,7 @@ all:	helloWorld lazyVector \
 	transformingMatrixWithHeapArray \
 	transformingMatrixAndVector \
 	adaptingMyMatrixAndVectorClassesToProto \
-	transformingMatrixVectorMultiplication
+	# transformingMatrixVectorMultiplication
 
 
 CPP11STD = -std=c++11

@@ -15,26 +15,40 @@ namespace LinAlg {
 	class Vector;
 	class Matrix;
 
-	// Functor for lazy evaluation
-	struct ElmOfMatVecMult;
 
-	// The grammar for an expression like ( matrix * vector )(index)
+	struct MatVecMult;
+
+	/* // The grammar for an expression like ( matrix * vector )(index)
 	//
 	// ( Note that ( matrix * vector ) gives another vector, so that
 	// its index'th element is given by ( matrix * vector )(index) . )
 	struct MatVecMultElmGrammar : proto::or_<
-		proto::when< proto::multiplies< Matrix, Vector>,
-					proto::_make_function( ElmOfMatVecMult,
-											proto::_left, proto::_right,
-											proto::_state) >
+		proto::when< proto::multiplies< proto::terminal< Matrix> ,
+										proto::terminal< Vector> >,
+					MatVecMultElm( proto::_value( proto::_left),
+									proto::_value( proto::_right),
+									proto::_value( proto::_state) ) >
+	> {}; */
+
+	/* // Lazy function object for matrix-vector multiplication
+	class LazyMatVecMult; */
+
+	struct MatVecMultGrammar : proto::or_<
+		proto::when<
+			proto::multiplies< proto::terminal< Matrix> ,
+								proto::terminal< Vector> >,
+			MatVecMult( proto::_value( proto::_left),
+						proto::_value( proto::_right) )
+		>
 	> {};
 
 	// The grammar for a vector expression
 	// ( Now I consider just one form : matrix * vector . )
 	struct VecExprGrammar : proto::or_<
-		proto::when< proto::function< MatVecMultElmGrammar, proto::_>,
-					MatVecMultElmGrammar( proto::_left, proto::_right) >,
-		proto::multiplies< Matrix, Vector>
+		//proto::when< proto::function< MatVecMultElmGrammar, proto::_>,
+		//			MatVecMultElmGrammar( proto::_left, proto::_right) >,
+		proto::function< MatVecMultGrammar, proto::_>,
+		MatVecMultGrammar
 	> {};
 
 
@@ -53,11 +67,11 @@ namespace LinAlg {
 	struct Expr
 		: proto::extends<ExprType, Expr<ExprType>, Domain>
 	{
+		/* typedef double result_type; */
+
 		explicit Expr(const ExprType& e)
 			: proto::extends<ExprType, Expr<ExprType>, Domain>(e)
 		{}
-
-		// typedef double result_type;
 	};
 
 
@@ -68,12 +82,12 @@ namespace LinAlg {
 			double* data;
 
 	public:
+		/*` typedef double result_type;
+
 		template <typename Sig> struct result;
 
 		template <typename This, typename T>
-		struct result< This(T) > { typedef double type; };
-
-		typedef double result_type;
+		struct result< This(T) > { typedef double type; }; */
 
 		explicit Vector(int sz_ = 1, double iniVal = 0.0) :
 			sz( sz_), data( new double[sz] ) {
@@ -115,10 +129,12 @@ namespace LinAlg {
 		double** m;
 
 	public:
-		template <typename Signature> struct result;
+		/* typedef double result_type; */
+
+		/* template <typename Signature> struct result;
 
 		template <typename This, typename T>
-		struct result< This(T,T) > { typedef double type; };
+		struct result< This(T,T) > { typedef double type; }; */
 
 		explicit Matrix(int rowSize = 1, int columnSize =1,
 					double iniVal = 0.0) :
@@ -158,30 +174,71 @@ namespace LinAlg {
 
 	};
 
-
-	// Functor for lazily evaluating an element of the resultant vector
+	// Lazy function object for evaluating an element of
+	// the resultant vector
 	// from the multiplication of a matrix and vector
 	//
 	// An expression like ( matrix * vector )(index) is transformed
 	// into the loop for calculating the dot product between
 	// the vector and matrix.
-	struct ElmOfMatVecMult
+	struct LazyMatVecMult
 	{
-		double operator()( Matrix const& mat, Vector const& vec,
-						int index) const
+		Matrix const& m;
+		Vector const& v;
+		int mColSz;
+
+		typedef double result_type;
+		// typedef mpl::int_<1> proto_arity;
+
+		explicit LazyMatVecMult(Matrix const& mat, Vector const& vec) :
+		m( mat), v( vec), mColSz(mat.rowSize()) {}
+
+		LazyMatVecMult(LazyMatVecMult const& lazy) :
+			m(lazy.m), v(lazy.v), mColSz(lazy.mColSz) {}
+
+		result_type operator()(int index) const
 		{
-			double elm = 0.0;
+			result_type elm = 0.0;
+			for (int ci =0;  ci < mColSz; ci++)
+				elm += m(index, ci) * v(ci);
+			return elm;
+		}
+	};
+
+	struct MatVecMult : proto::callable
+	{
+		typedef proto::terminal< LazyMatVecMult >::type result_type;
+
+		// template <typename M, typename V>
+		result_type
+		// operator()( M const& mat, V const& vec) const
+		operator()( Matrix const& mat, Vector const& vec) const
+		{
+			return proto::as_expr( LazyMatVecMult(mat, vec) );
+		}
+	};
+
+	/* struct MatVecMultElm : proto::callable
+	{
+		typedef double result_type;
+
+		result_type
+		operator()( Matrix const& mat, Vector const& vec, int index) const
+		{
+			result_type elm = 0.0;
 			for (int ci =0;  ci < mat.columnSize(); ci++)
 				elm += mat(index, ci) * vec(ci);
 			return elm;
 		}
-	};
+	}; */
 
 	// Define a trait for detecting linear algebraic terminals, to be used
 	// by the BOOST_PROTO_DEFINE_OPERATORS macro below.
 	template<typename> struct IsExpr  : mpl::false_ {};
 	template<> struct IsExpr< Vector> : mpl::true_  {};
 	template<> struct IsExpr< Matrix> : mpl::true_  {};
+	// template<> struct IsExpr< MatVecMult> : mpl::true_  {};
+	template<> struct IsExpr< LazyMatVecMult> : mpl::true_  {};
 
 	// This defines all the overloads to make expressions involving
 	// Vector and Matrix objects to build Proto's expression templates.
@@ -210,9 +267,12 @@ int main()
     vec1(1) = 2.0;
     vec1(2) = 3.0;
 
-    proto::display_expr( ( mat * vec1)(2) );
-    proto::display_expr( VecExprGrammar()( ( mat * vec1)(2) );
-    // double elm2 = trans( VecExprGrammar()( ( mat * vec1)(2) );
+    proto::display_expr( mat * vec1 );
+    proto::display_expr( MatVecMultGrammar()( mat * vec1) );
+    // proto::display_expr( VecExprGrammar()( mat * vec1) );
+    // proto::display_expr( ( mat * vec1)(2) );
+    // proto::display_expr( VecExprGrammar()( ( mat * vec1)(2) ) );
+    double elm2 = trans( VecExprGrammar()( ( mat * vec1)(2) ) );
 
     // Let's see if any temporary oject is copied !
     // vec2 = proto::as_expr(mat * vec1);

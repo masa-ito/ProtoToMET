@@ -15,7 +15,7 @@ namespace LinAlg {
 	class Vector;
 	class Matrix;
 
-	struct ElmOfMatVecMult;
+	struct MatVecMultElm;
 
 	/*
 	// The transformation rule for vector element expressions
@@ -43,7 +43,7 @@ namespace LinAlg {
 	// which results from multiplicaton of matrix and vector
 	struct MatVecMultElmTrans : proto::or_<
 		proto::when< proto::multiplies< Matrix, Vector>,
-					proto::_make_function( ElmOfMatVecMult,
+					proto::_make_function( MatVecMultElm,
 											proto::_left, proto::_right,
 											proto::_state) > //,
 		// proto::plus< MatVecMultElmTrans, MatVecMultElmTrans>,
@@ -232,7 +232,7 @@ namespace LinAlg {
 		*/
 	};
 
-	struct ElmOfMatVecMult
+	struct MatVecMultElm
 	{
 		double operator()( Matrix const& mat, Vector const& vec,
 						int index) const
