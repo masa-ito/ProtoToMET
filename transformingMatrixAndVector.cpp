@@ -93,8 +93,7 @@ class Vector {
 		double* data;
 
 public:
-	template <typename Signature>
-	struct result;
+	template <typename Sig> struct result;
 
 	template <typename This, typename T>
 	struct result< This(T) > { typedef double type; };
@@ -150,7 +149,7 @@ private:
 	double** m;
 
 public:
-	template <typename Signature> struct result;
+	template <typename Sig> struct result;
 
 	template <typename This, typename T>
 	struct result< This(T,T) > { typedef double type; };

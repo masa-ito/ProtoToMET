@@ -4,11 +4,13 @@ all:	helloWorld lazyVector \
 	protofyingArrayWrapper protofyingStdVectorWrapper \
 	vectorAdaptingNonProtoTermType adaptingArrayWrapper \
 	adaptingMatrixWithAutoArray2x2 adaptingMatrixWithHeapArray \
-	adaptingVectorWithHeapArray transformingVectorOnHeapArray \
+	adaptingVectorWithHeapArray  \
 	linAlgAdd \
+	transformingVectorOnHeapArray \
 	transformingVectorOnHeapArrayUsingFunctionType \
 	transformingMatrixWithHeapArray \
 	transformingMatrixAndVector \
+	adaptingMyMatrixAndVectorClassesToProto \
 	transformingMatrixVectorMultiplication
 
 
@@ -64,6 +66,9 @@ transformingMatrixWithHeapArray : transformingMatrixWithHeapArray.cpp
 	${CXX} ${CPP11STD} $< -o $@
 
 transformingMatrixAndVector : transformingMatrixAndVector.cpp
+	${CXX} ${CPP11STD} $< -o $@
+
+adaptingMyMatrixAndVectorClassesToProto : adaptingMyMatrixAndVectorClassesToProto.cpp
 	${CXX} ${CPP11STD} $< -o $@
 
 transformingMatrixVectorMultiplication : transformingMatrixVectorMultiplication.cpp
