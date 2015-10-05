@@ -16,23 +16,11 @@ namespace LinAlg {
 	class Matrix;
 
 
+	// Callable transform object to make a proto exression
+	// for lazily evaluationg a. multiplication
 	struct MatVecMult;
 
-	/* // The grammar for an expression like ( matrix * vector )(index)
-	//
-	// ( Note that ( matrix * vector ) gives another vector, so that
-	// its index'th element is given by ( matrix * vector )(index) . )
-	struct MatVecMultElmGrammar : proto::or_<
-		proto::when< proto::multiplies< proto::terminal< Matrix> ,
-										proto::terminal< Vector> >,
-					MatVecMultElm( proto::_value( proto::_left),
-									proto::_value( proto::_right),
-									proto::_value( proto::_state) ) >
-	> {}; */
-
-	/* // Lazy function object for matrix-vector multiplication
-	class LazyMatVecMult; */
-
+	// The grammar for the multiplication of a matrix and a vector
 	struct MatVecMultGrammar : proto::or_<
 		proto::when<
 			proto::multiplies< proto::terminal< Matrix> ,
@@ -45,15 +33,12 @@ namespace LinAlg {
 	// The grammar for a vector expression
 	// ( Now I consider just one form : matrix * vector . )
 	struct VecExprGrammar : proto::or_<
-		//proto::when< proto::function< MatVecMultElmGrammar, proto::_>,
-		//			MatVecMultElmGrammar( proto::_left, proto::_right) >,
 		proto::function< MatVecMultGrammar, proto::_>,
 		MatVecMultGrammar
 	> {};
 
 
-	// struct Domain : proto::domain<> {};
-
+	// A wrapper for a linear algebraic expression
 	template<typename E> struct Expr;
 
 	// The above grammar is associated with this domain.
@@ -82,13 +67,6 @@ namespace LinAlg {
 			double* data;
 
 	public:
-		/*` typedef double result_type;
-
-		template <typename Sig> struct result;
-
-		template <typename This, typename T>
-		struct result< This(T) > { typedef double type; }; */
-
 		explicit Vector(int sz_ = 1, double iniVal = 0.0) :
 			sz( sz_), data( new double[sz] ) {
 			for (int i = 0; i < sz; i++) data[i] = iniVal;
@@ -129,12 +107,6 @@ namespace LinAlg {
 		double** m;
 
 	public:
-		/* typedef double result_type; */
-
-		/* template <typename Signature> struct result;
-
-		template <typename This, typename T>
-		struct result< This(T,T) > { typedef double type; }; */
 
 		explicit Matrix(int rowSize = 1, int columnSize =1,
 					double iniVal = 0.0) :
@@ -175,8 +147,8 @@ namespace LinAlg {
 	};
 
 	// Lazy function object for evaluating an element of
-	// the resultant vector
-	// from the multiplication of a matrix and vector
+	// the resultant vector from the multiplication of
+	// a matrix and vector objects.
 	//
 	// An expression like ( matrix * vector )(index) is transformed
 	// into the loop for calculating the dot product between
@@ -205,32 +177,19 @@ namespace LinAlg {
 		}
 	};
 
+	// Callable transform object to make the lazy functor
+	// a proto exression for lazily evaluationg the multiplication
+	// of a matrix and a vector .
 	struct MatVecMult : proto::callable
 	{
 		typedef proto::terminal< LazyMatVecMult >::type result_type;
 
-		// template <typename M, typename V>
 		result_type
-		// operator()( M const& mat, V const& vec) const
 		operator()( Matrix const& mat, Vector const& vec) const
 		{
 			return proto::as_expr( LazyMatVecMult(mat, vec) );
 		}
 	};
-
-	/* struct MatVecMultElm : proto::callable
-	{
-		typedef double result_type;
-
-		result_type
-		operator()( Matrix const& mat, Vector const& vec, int index) const
-		{
-			result_type elm = 0.0;
-			for (int ci =0;  ci < mat.columnSize(); ci++)
-				elm += mat(index, ci) * vec(ci);
-			return elm;
-		}
-	}; */
 
 	// Define a trait for detecting linear algebraic terminals, to be used
 	// by the BOOST_PROTO_DEFINE_OPERATORS macro below.
@@ -267,12 +226,18 @@ int main()
     vec1(1) = 2.0;
     vec1(2) = 3.0;
 
+    std::cout << " mat * vec1" << std::endl;
     proto::display_expr( mat * vec1 );
+    std::cout << " MatVecMultGrammar()( mat * vec1) " << std::endl;
     proto::display_expr( MatVecMultGrammar()( mat * vec1) );
-    // proto::display_expr( VecExprGrammar()( mat * vec1) );
-    // proto::display_expr( ( mat * vec1)(2) );
-    // proto::display_expr( VecExprGrammar()( ( mat * vec1)(2) ) );
+
+    std::cout << "( mat * vec1)(2)" << std::endl;
+    proto::display_expr( ( mat * vec1)(2) );
+    std::cout << "VecExprGrammar()( ( mat * vec1)(2) )" << std::endl;
+    proto::display_expr( VecExprGrammar()( ( mat * vec1)(2) ) );
     double elm2 = trans( VecExprGrammar()( ( mat * vec1)(2) ) );
+
+    std::cout << "( mat * vec1)(2) = " << elm2 << std::endl;
 
     // Let's see if any temporary oject is copied !
     // vec2 = proto::as_expr(mat * vec1);
