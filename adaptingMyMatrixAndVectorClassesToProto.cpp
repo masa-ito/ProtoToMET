@@ -87,14 +87,14 @@ namespace LinAlg {
 		double& operator()(int i) { return data[i]; }
 		const double& operator()(int i) const { return data[i]; }
 
-		/* // assigning the lhs of a vector expression into this vector
+		// assigning the lhs of a vector expression into this vector
 		template<typename Expr>
 		Vector& operator=( const Expr& expr ) {
 			proto::_default<> trans;
 			for(int i=0; i < sz; ++i)
 				data[i] = trans( VecExprGrammar()( expr(i) ) );
 			return *this;
-		} */
+		}
 	};
 
 
@@ -152,7 +152,7 @@ namespace LinAlg {
 	//
 	// An expression like ( matrix * vector )(index) is transformed
 	// into the loop for calculating the dot product between
-	// the vector and matrix.
+	// the index'th row of the matrix and the vector.
 	struct LazyMatVecMult
 	{
 		Matrix const& m;
@@ -213,7 +213,7 @@ int main()
 {
 	using namespace LinAlg;
 
-	proto::_default<> trans;
+    std::cout << "Let's see if any temporary oject is copied !" << std::endl;
 
     Matrix mat( 3, 3);
     Vector vec1(3), vec2(3);
@@ -235,12 +235,19 @@ int main()
     proto::display_expr( ( mat * vec1)(2) );
     std::cout << "VecExprGrammar()( ( mat * vec1)(2) )" << std::endl;
     proto::display_expr( VecExprGrammar()( ( mat * vec1)(2) ) );
+
+	proto::_default<> trans;
     double elm2 = trans( VecExprGrammar()( ( mat * vec1)(2) ) );
 
     std::cout << "( mat * vec1)(2) = " << elm2 << std::endl;
+    // This should be 7.28 .
 
-    // Let's see if any temporary oject is copied !
-    // vec2 = proto::as_expr(mat * vec1);
+    vec2 = mat * vec1;
+
+    std::cout << " vec2 = mat * vec1 = " << std::endl;
+    std::cout << " ( " << vec2(0) << ", " << vec2(1) << ", " <<
+    		vec2(2) << ")" << std::endl;
+    // This should be ( 6.08 , 6.68 , 7.28) .
 
 	return 0;
 }
