@@ -14,7 +14,6 @@ namespace proto = boost::proto;
 class Vector;
 class Matrix;
 
-struct ElmOfMatVecMult;
 
 // The transformation rule for vector element expressions
 // This transform accepts a subscript index  of an expression being parsed
@@ -42,8 +41,7 @@ struct VecExprTrans : proto::or_<
 				VecElmTrans(proto::_left, proto::_right) >,
 	proto::terminal< Vector >,
 	proto::plus< VecExprTrans, VecExprTrans> ,
-	proto::minus< VecExprTrans, VecExprTrans>,
-	proto::multiplies< Matrix, Vector>
+	proto::minus< VecExprTrans, VecExprTrans>
 > {};
 
 // The tranformation rule for matrix expressions
