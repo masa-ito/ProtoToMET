@@ -37,6 +37,10 @@ namespace LinAlg {
 		// Vector
 		proto::when< proto::terminal< Vector>,
 					proto::_make_function( proto::_, proto::_state) >,
+		// Matrix * Vector
+		proto::when< MatVecMultGrammar,
+					proto::_make_function( MatVecMultGrammar( proto::_),
+											proto::_state) >,
 		// VecElmGrammar +(-) VecElmGrammar
 		proto::plus< VecElmGrammar, VecElmGrammar> ,
 		proto::minus< VecElmGrammar, VecElmGrammar>
@@ -53,7 +57,6 @@ namespace LinAlg {
 		proto::plus< VecExprGrammar, VecExprGrammar> ,
 		proto::minus< VecExprGrammar, VecExprGrammar>,
 		// Matrix * Vector
-		proto::function< MatVecMultGrammar, proto::_>,
 		MatVecMultGrammar
 	> {};
 
@@ -336,19 +339,23 @@ int main()
         	<< std::endl;
 	syntaxChecker( vecB - matA * vecX );
 
+    std::cout << "Checking if ( vecB - matA * vecX)(2) "
+    		<< "matches to ExprGrammar ..."
+        	<< std::endl;
+	syntaxChecker( ( vecB - matA * vecX)(2) );
 
-    // proto::_default<> trans;
-    // double elm2 = trans( VecExprGrammar()( ( vecB - matA * vecX)(2) ) );
+    proto::_default<> trans;
+    double elm2 = trans( VecExprGrammar()( ( vecB - matA * vecX)(2) ) );
 
-    // std::cout << "( vecB - matA * vecX)(2) = " << elm2 << std::endl;
-    // This should be  ???? .
+    std::cout << "( vecB - matA * vecX)(2) = " << elm2 << std::endl;
+    // This should be  -1.28 .
 
     vecR = vecB - matA * vecX;
 
     std::cout << " vecR = vecB - matA * vecX = " << std::endl;
     std::cout << " ( " << vecR(0) << ", " << vecR(1) << ", " <<
     		vecR(2) << ")" << std::endl;
-    // This should be ( ??? , ??? , ???) .
+    // This should be ( -2.08 , -1.68 , -1.28) .
 
 	return 0;
 }
