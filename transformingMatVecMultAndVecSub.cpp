@@ -335,7 +335,7 @@ int main()
 	ExpressionSyntaxChecker< ExprGrammar >
 		syntaxChecker = ExpressionSyntaxChecker< ExprGrammar >();
 
-    std::cout << "Checking if mat * vec1 matches to ExprGrammar ..."
+    std::cout << "Checking if (vecB - matA * vecX) matches to ExprGrammar ..."
         	<< std::endl;
 	syntaxChecker( vecB - matA * vecX );
 
