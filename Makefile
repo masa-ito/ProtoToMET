@@ -4,7 +4,18 @@ all:	helloWorld lazyVector \
 	protofyingArrayWrapper protofyingStdVectorWrapper \
 	vectorAdaptingNonProtoTermType adaptingArrayWrapper \
 	adaptingMatrixWithAutoArray2x2 adaptingMatrixWithHeapArray \
-	adaptingVectorWithHeapArray
+	adaptingVectorWithHeapArray  \
+	linAlgAdd \
+	transformingVectorOnHeapArray \
+	transformingVectorOnHeapArrayUsingFunctionType \
+	transformingMatrixWithHeapArray \
+	transformingMatrixAndVector \
+	adaptingMyMatrixAndVectorClassesToProto \
+	transformingMatrixVectorMultiplication \
+	transformingMatVecMultAndVecSub
+
+
+CPP11STD = -std=c++11
 
 helloWorld : helloWorld.cpp
 	${CXX} $< -o $@
@@ -39,3 +50,31 @@ adaptingMatrixWithHeapArray : adaptingMatrixWithHeapArray.cpp
 
 adaptingVectorWithHeapArray : adaptingVectorWithHeapArray.cpp
 	${CXX} $< -o $@
+
+linAlgAdd : linAlgAdd.cpp
+	${CXX} $< -o $@
+
+# linAlgResid : linAlgResid.cpp
+# 	${CXX} $< -o $@
+
+transformingVectorOnHeapArray : transformingVectorOnHeapArray.cpp
+	${CXX} ${CPP11STD} $< -o $@
+
+transformingVectorOnHeapArrayUsingFunctionType : transformingVectorOnHeapArrayUsingFunctionType.cpp
+	${CXX} ${CPP11STD} $< -o $@
+
+transformingMatrixWithHeapArray : transformingMatrixWithHeapArray.cpp
+	${CXX} ${CPP11STD} $< -o $@
+
+transformingMatrixAndVector : transformingMatrixAndVector.cpp
+	${CXX} ${CPP11STD} $< -o $@
+
+adaptingMyMatrixAndVectorClassesToProto : adaptingMyMatrixAndVectorClassesToProto.cpp
+	${CXX} ${CPP11STD} $< -o $@
+
+transformingMatrixVectorMultiplication : transformingMatrixVectorMultiplication.cpp
+	${CXX} ${CPP11STD} $< -o $@
+
+transformingMatVecMultAndVecSub : transformingMatVecMultAndVecSub.cpp
+	${CXX} ${CPP11STD} $< -o $@
+

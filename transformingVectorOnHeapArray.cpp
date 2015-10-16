@@ -1,11 +1,12 @@
 /*
- * adaptingVectorWithHeapArray.cpp
+ * transformingVectorOnHeapArray.cpp
  *
- *  Created on: 2015/05/29
+ *  Created on: 2015/07/16
  *      Author: Masakatsu ITO
  */
 
 #include <iostream>
+#include <type_traits>
 #include <boost/proto/proto.hpp>
 
 namespace mpl = boost::mpl;
@@ -14,51 +15,30 @@ namespace proto = boost::proto;
 
 class Vector;
 
+// This transform accepts a subscript index  of an expression being parsed
+// as the state variable,and distribute that index over the child nodes.
+struct IndxDist : proto::or_<
+	proto::when< proto::terminal< Vector>,
+				proto::_make_subscript( proto::_, proto::_state) >,
+	proto::plus< IndxDist, IndxDist> ,
+	proto::minus< IndxDist, IndxDist>
+> {};
+
 // This grammar describes which vector expressions
-// are allowed; namely, vector terminals and addition
-// and subtraction of vector expressions.
-struct VecGrammar : proto::or_<
-	// proto::terminal< proto::_ >,
+// are allowed.
+struct VecExprOpt : proto::or_<
+	proto::when< proto::subscript< IndxDist, proto::_ >,
+				IndxDist(proto::_left, proto::_right) >,
 	proto::terminal< Vector >,
-	proto::plus< VecGrammar, VecGrammar>,
-	proto::minus< VecGrammar, VecGrammar>
+	proto::plus< VecExprOpt, VecExprOpt> ,
+	proto::minus< VecExprOpt, VecExprOpt>
 > {};
 
 
 // The above grammar is associated with this domain.
 template<typename Expr> struct VecExpr;
 struct VecDomain
-	: proto::domain<proto::generator<VecExpr>, VecGrammar> {};
-
-
-//
-// Context for evaluating an element of vector expressions
-//
-struct SubscriptCntxt
-	: proto::callable_context<const SubscriptCntxt> {
-		typedef double result_type;
-
-		int index;
-		SubscriptCntxt(int index_) :  index(index_) {}
-
-		// vector element
-		template<typename Vector>
-		double operator()(proto::tag::terminal, const Vector& vec) const {
-			return vec[index];
-		}
-
-		// addition of vector expression terms
-		template<typename E1, typename E2>
-		double operator()(proto::tag::plus, const E1& e1, const E2& e2) const {
-			return proto::eval(e1, *this) + proto::eval(e2, *this);
-		}
-
-		// substraction of vector expression terms
-		template<typename E1, typename E2>
-		double operator()(proto::tag::minus, const E1& e1, const E2& e2) const {
-			return proto::eval(e1, *this) - proto::eval(e2, *this);
-		}
-};
+	: proto::domain<proto::generator<VecExpr>, VecExprOpt> {};
 
 
 //
@@ -69,14 +49,6 @@ struct VecExpr
 	: proto::extends<Expr, VecExpr<Expr>, VecDomain> {
 		explicit VecExpr(const Expr& e)
 			: proto::extends<Expr, VecExpr<Expr>, VecDomain>(e) {
-		}
-
-		// Use a SubscriptCntxt instance to implement subscripting
-		// of a vector expression tree.
-		typename proto::result_of::eval< Expr, SubscriptCntxt>::type
-		operator [](int i) const {
-			const SubscriptCntxt ctx(i);
-			return proto::eval(*this, ctx);
 		}
 };
 
@@ -112,22 +84,19 @@ public:
 	// assigning the lhs of a vector expression into this vector
 	template<typename Expr>
 	Vector& operator=( const Expr& expr ) {
-		for(int i=0; i < sz; ++i) {
-				// evaluating the i'th element of a vector expression
-				const SubscriptCntxt ctx(i);
-				data[i] = proto::eval(proto::as_expr<VecDomain>(expr), ctx);
-		}
+		proto::_default<> trans;
+		for(int i=0; i < sz; ++i)
+			data[i] = trans( VecExprOpt()( expr[i] ) );
 		return *this;
 	}
 
 	// assigning and adding the lhs of a vector expression into this vector
 	template<typename Expr>
 	Vector& operator+=( const Expr& expr ) {
-		for(int i=0; i < sz; ++i) {
-				// evaluating the (i,j) element of a matrix expression
-				const SubscriptCntxt ctx(i);
-				data[i] += proto::eval(proto::as_expr<VecDomain>(expr), ctx);
-		}
+		proto::_default<> trans;
+		for(int i=0; i < sz; ++i)
+			data[i] += trans( VecExprOpt()( expr[i] ) );
+		// std::cout << "Vector& operator+= done." << std::endl;
 		return *this;
 	}
 };
@@ -139,12 +108,26 @@ template<typename> struct IsVector : mpl::false_ {};
 template<> struct IsVector<Vector> : mpl::true_  {};
 
 
-
 namespace VectorOps {
 	// This defines all the overloads to make expressions involving
 	// Vector objects to build expression templates.
 	BOOST_PROTO_DEFINE_OPERATORS(IsVector, VecDomain)
 }
+
+template <typename SyntaxRule>
+struct ExpressionSyntaxChecker
+{
+	template <class Expr>
+	void operator ()(Expr const & expr) const {
+		static_assert(
+				proto::matches<Expr, SyntaxRule>::value,
+				"The expression does not match to the syntax rule!"
+		);
+		proto::display_expr( expr );
+		std::cout << std::endl;
+	}
+};
+
 
 int main()
 {
@@ -154,11 +137,24 @@ int main()
     Vector v1( 4, 1.0 ), v2( 4, 2.0 ), v3( 4, 3.0 );
 
     // Add two vectors lazily and get the 2nd element.
-    double d1 = ( v2 + v3 )[ 2 ];   // Look ma, no temporaries!
-    std::cout << d1 << std::endl;
+    std::cout << "Checking if v2 + v3 matches to VecExprOpt rule ..." << std::endl;
+    ExpressionSyntaxChecker< VecExprOpt >()( v2 + v3 );
+
+    std::cout << "Checking if (v2 + v3)[2] matches to VecExprOpt rule ..." << std::endl;
+    ExpressionSyntaxChecker< VecExprOpt >()( ( v2 + v3 )[2] );
+
+    std::cout << "Checking if VecExprOpt()( ( v2 + v3 )[ 2 ] )";
+    std::cout << " matches to VecExprOpt rule ..." << std::endl;
+    ExpressionSyntaxChecker< VecExprOpt >()( VecExprOpt()( ( v2 + v3 )[ 2 ] ) );
+
+    proto::_default<> trans;
+    double d1 = trans( VecExprOpt()( ( v2 + v3 )[ 2 ] ) );   // Look ma, no temporaries!
+    std::cout << "( v2 + v3 )[ 2 ] = " << d1 << std::endl;
 
     // Subtract two vectors and add the result to a third vector.
     v1 += v2 - v3;                  // Still no temporaries!
+    std::cout << "v1 += v2 - v3" << std::endl;
+    std::cout << "v1 =";
     std::cout << '{' << v1[0] << ',' << v1[1]
               << ',' << v1[2] << ',' << v1[3] << '}' << std::endl;
 
