@@ -11,8 +11,6 @@ all:	helloWorld lazyVector \
 	transformingMatrixWithHeapArray \
 	transformingMatrixAndVector \
 	adaptingMyMatrixAndVectorClassesToProto \
-	transformingMatrixVectorMultiplication \
-	transformingMatVecMultAndVecSub
 
 
 CPP11STD = -std=c++11
@@ -72,9 +70,5 @@ transformingMatrixAndVector : transformingMatrixAndVector.cpp
 adaptingMyMatrixAndVectorClassesToProto : adaptingMyMatrixAndVectorClassesToProto.cpp
 	${CXX} ${CPP11STD} $< -o $@
 
-transformingMatrixVectorMultiplication : transformingMatrixVectorMultiplication.cpp
-	${CXX} ${CPP11STD} $< -o $@
 
-transformingMatVecMultAndVecSub : transformingMatVecMultAndVecSub.cpp
-	${CXX} ${CPP11STD} $< -o $@
 
