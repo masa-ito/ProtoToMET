@@ -1,95 +1,25 @@
 /*
- * transformingMatVecMultAndVecSub.cpp
+ * MatrixVector.hpp
  *
- *  Created on: 2015/10/14
- *      Author: mito
+ *  Created on: 2015/10/20
+ *      Author: Masakatsu ITO
  */
+
+#ifndef DENSELINALG_MATRIXVECTOR_HPP_
+#define DENSELINALG_MATRIXVECTOR_HPP_
 
 #include <iostream>
 #include <boost/proto/proto.hpp>
 
+#include <DenseLinAlg/Grammar.hpp>
+
+
 namespace mpl = boost::mpl;
 namespace proto = boost::proto;
 
-namespace LinAlg {
-	class Vector;
-	class Matrix;
 
+namespace DenseLinAlg {
 
-	// Callable transform object to make a proto exression
-	// for lazily evaluationg a. multiplication
-	struct MatVecMult;
-
-	// The grammar for the multiplication of a matrix and a vector
-	struct MatVecMultGrammar : proto::or_<
-		proto::when<
-			proto::multiplies< proto::terminal< Matrix> ,
-								proto::terminal< Vector> >,
-			MatVecMult( proto::_value( proto::_left),
-						proto::_value( proto::_right) )
-		>
-	> {};
-
-	// The transformation rule for vector element expressions
-	// This transform accepts a subscript index  of an expression being parsed
-	// as the state variable,and distribute that index over the child nodes.
-	struct VecElmGrammar : proto::or_<
-		// Vector
-		proto::when< proto::terminal< Vector>,
-					proto::_make_function( proto::_, proto::_state) >,
-		// Matrix * Vector
-		proto::when< MatVecMultGrammar,
-					proto::_make_function( MatVecMultGrammar( proto::_),
-											proto::_state) >,
-		// VecElmGrammar +(-) VecElmGrammar
-		proto::plus< VecElmGrammar, VecElmGrammar> ,
-		proto::minus< VecElmGrammar, VecElmGrammar>
-	> {};
-
-	// The grammar for a vector expression
-	struct VecExprGrammar : proto::or_<
-		// VecElmGrammar( index )
-		proto::when< proto::function< VecElmGrammar, proto::_ >,
-					VecElmGrammar(proto::_left, proto::_right) >,
-		// Vector
-		proto::terminal< Vector >,
-		// VecExprGrammar +(-) VecExprGrammar
-		proto::plus< VecExprGrammar, VecExprGrammar> ,
-		proto::minus< VecExprGrammar, VecExprGrammar>,
-		// Matrix * Vector
-		MatVecMultGrammar
-	> {};
-
-	// The transformation rule for matrix element expressions
-	struct MatElmGrammar : proto::or_<
-		// Matrix
-		proto::when< proto::terminal< Matrix>,
-					proto::_make_function( proto::_,
-										proto::_state, proto::_data) >,
-		// MatElmGrammar +(-) MatElmGrammar
-		proto::plus< MatElmGrammar, MatElmGrammar> ,
-		proto::minus< MatElmGrammar, MatElmGrammar>
-	> {};
-
-	// The tranformation rule for matrix expressions
-	struct MatExprGrammar : proto::or_<
-		// MatElmGrammar( rowIndex, columnIndex )
-		proto::when<
-				proto::function< MatElmGrammar, proto::_ , proto::_ >,
-				MatElmGrammar(proto::_child0, proto::_child1, proto::_child2)
-			>,
-		// matrix
-		proto::terminal< Matrix >,
-		// MatExprGrammar +(-) MatExprGrammar
-		proto::plus< MatExprGrammar, MatExprGrammar> ,
-		proto::minus< MatExprGrammar, MatExprGrammar>
-	> {};
-
-	// The tranformation rule for linear algebraic expressions
-	struct ExprGrammar : proto::or_<
-		VecExprGrammar,
-		MatExprGrammar
-	> {};
 
 	// A wrapper for a linear algebraic expression
 	template<typename E> struct ExprWrapper;
@@ -281,83 +211,10 @@ namespace LinAlg {
 		}
 	};
 
-	// Define a trait for detecting linear algebraic terminals, to be used
-	// by the BOOST_PROTO_DEFINE_OPERATORS macro below.
-	template<typename> struct IsExpr  : mpl::false_ {};
-	template<> struct IsExpr< Vector> : mpl::true_  {};
-	template<> struct IsExpr< Matrix> : mpl::true_  {};
-	// template<> struct IsExpr< MatVecMult> : mpl::true_  {};
-	template<> struct IsExpr< LazyMatVecMult> : mpl::true_  {};
-
-	// This defines all the overloads to make expressions involving
-	// Vector and Matrix objects to build Proto's expression templates.
-	BOOST_PROTO_DEFINE_OPERATORS(IsExpr, Domain)
-	// BOOST_PROTO_DEFINE_OPERATORS(IsExpr, proto::default_domain)
 
 }
 
 
-template <typename SyntaxRule>
-struct ExpressionSyntaxChecker
-{
-	template <class Expr>
-	void operator ()(Expr const & expr) const {
-		static_assert(
-				proto::matches<Expr, SyntaxRule>::value,
-				"The expression does not match to the syntax rule!"
-		);
-		proto::display_expr( expr );
-		std::cout << std::endl;
-	}
-};
 
 
-
-int main()
-{
-	using namespace LinAlg;
-
-    Matrix matA( 3, 3);
-    Vector vecX(3), vecB(3), vecR(3);
-
-    matA(0,0) = 1.00; matA(0,1) = 1.01; matA(0,2) = 1.02;
-    matA(1,0) = 1.10; matA(1,1) = 1.11; matA(1,2) = 1.12;
-    matA(2,0) = 1.20; matA(2,1) = 1.21; matA(2,2) = 1.22;
-
-    vecX(0) = 1.0;
-    vecX(1) = 2.0;
-    vecX(2) = 3.0;
-
-    vecB(0) = 4.0;
-    vecB(1) = 5.0;
-    vecB(2) = 6.0;
-
-	ExpressionSyntaxChecker< ExprGrammar >
-		syntaxChecker = ExpressionSyntaxChecker< ExprGrammar >();
-
-    std::cout << "Checking if (vecB - matA * vecX) matches to ExprGrammar ..."
-        	<< std::endl;
-	syntaxChecker( vecB - matA * vecX );
-
-    std::cout << "Checking if ( vecB - matA * vecX)(2) "
-    		<< "matches to ExprGrammar ..."
-        	<< std::endl;
-	syntaxChecker( ( vecB - matA * vecX)(2) );
-
-    proto::_default<> trans;
-    double elm2 = trans( VecExprGrammar()( ( vecB - matA * vecX)(2) ) );
-
-    std::cout << "( vecB - matA * vecX)(2) = " << elm2 << std::endl;
-    // This should be  -1.28 .
-
-    vecR = vecB - matA * vecX;
-
-    std::cout << " vecR = vecB - matA * vecX = " << std::endl;
-    std::cout << " ( " << vecR(0) << ", " << vecR(1) << ", " <<
-    		vecR(2) << ")" << std::endl;
-    // This should be ( -2.08 , -1.68 , -1.28) .
-
-	return 0;
-}
-
-
+#endif /* DENSELINALG_MATRIXVECTOR_HPP_ */
