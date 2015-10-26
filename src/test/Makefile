@@ -11,3 +11,4 @@ transformingMatrixVectorMultiplication : transformingMatrixVectorMultiplication.
 
 transformingMatVecMultAndVecSub : transformingMatVecMultAndVecSub.cpp
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
+
