@@ -8,11 +8,13 @@
 #ifndef DENSELINALG_MATRIXVECTOR_HPP_
 #define DENSELINALG_MATRIXVECTOR_HPP_
 
+#include <math.h>
+
 #include <iostream>
 #include <boost/proto/proto.hpp>
 
 #include <DenseLinAlg/Grammar.hpp>
-
+#include <SparseLinAlg/IterSolver.hpp>
 
 namespace mpl = boost::mpl;
 namespace proto = boost::proto;
@@ -36,17 +38,22 @@ namespace DenseLinAlg {
 		: proto::extends<ExprType, ExprWrapper<ExprType>, Domain>
 	{
 		/* typedef double result_type; */
+		const int rowSz, colSz;
 
 		explicit ExprWrapper(const ExprType& e)
-			: proto::extends<ExprType, ExprWrapper<ExprType>, Domain>(e)
+			: proto::extends<ExprType, ExprWrapper<ExprType>, Domain>(e),
+			  rowSz( e.rowSize()), colSz( e.columnSize())
 		{}
+
+		int rowSize() const { return rowSz; }
+		int columnSize() const { return colSz; }
 	};
 
 
 	// Testing if data in an heap array can be a vector object
 	class Vector {
 		private:
-			int sz;
+			const int sz;
 			double* data;
 
 	public:
@@ -60,15 +67,49 @@ namespace DenseLinAlg {
 			for (int i = 0; i < sz; i++) data[i] = iniVal;
 			std::cout << "Created" << std::endl;
 		}
+
 		Vector(const Vector& vec) :
 			sz( vec.sz), data( new double[sz] ) {
 			for (int i = 0; i < sz; i++) data[i] = vec.data[i];
 			std::cout << "Copied! " << std::endl;
 		}
 
+		// assigning the lhs of a vector expression into this vector
+		template<typename Expr>
+		Vector( const Expr& expr ) :
+			sz( expr.columnSize()), data( new double[sz] ) {
+			proto::_default<> trans;
+			for(int i=0; i < sz; ++i)
+				data[i] = trans( VecExprGrammar()( expr(i) ) );
+		}
+
+		template <typename LazySolverType>
+		Vector(LazySolverType & solver) :
+			sz( solver.rhs.size()), data( new double[sz] )
+		{
+			solver.solveAndAssignTo( *this);
+		}
+
 		~Vector() {
 			delete [] data;
 			std::cout << "Deleted" << std::endl;
+		}
+
+		int size() const { return sz; }
+		int rowSize() const { return 1; }
+		int columnSize() const { return sz; }
+
+		double dot( const Vector& vec) const
+		{
+			double d = data[0] * vec.data[0];
+			for (int i = 1; i < sz; i++) d += data[i] * vec.data[i];
+			return d;
+		}
+
+		double abs() const {
+			double aSqr = data[0] * data[0];
+			for (int i = 1; i < sz; i++) aSqr += data[i] * data[i];
+			return sqrt( aSqr);
 		}
 
 		// accessing to an element of this vector
@@ -92,6 +133,13 @@ namespace DenseLinAlg {
 				data[i] += trans( VecExprGrammar()( expr(i) ) );
 			return *this;
 		}
+
+		template <typename LazySolverType>
+		Vector& operator=(LazySolverType & solver) {
+			solver.solveAndAssignTo( *this);
+			return *this;
+		}
+
 	};
 
 
