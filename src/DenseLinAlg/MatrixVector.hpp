@@ -14,7 +14,7 @@
 #include <boost/proto/proto.hpp>
 
 #include <DenseLinAlg/Grammar.hpp>
-#include <SparseLinAlg/IterSolver.hpp>
+// #include <SparseLinAlg/IterSolver.hpp>
 
 namespace mpl = boost::mpl;
 namespace proto = boost::proto;
@@ -50,7 +50,7 @@ namespace DenseLinAlg {
 	};
 
 
-	// Testing if data in an heap array can be a vector object
+
 	class Vector {
 		private:
 			const int sz;
@@ -83,12 +83,18 @@ namespace DenseLinAlg {
 				data[i] = trans( VecExprGrammar()( expr(i) ) );
 		}
 
-		template <typename LazySolverType>
-		Vector(LazySolverType & solver) :
-			sz( solver.rhs.size()), data( new double[sz] )
+		Vector( const LazyVectorMaker & maker) :
+			sz( maker.columnSize()), data( new double[sz] )
 		{
-			solver.solveAndAssignTo( *this);
+			maker.assignDataTo( *this);
 		}
+
+//		template <typename LazySolverType>
+//		Vector(LazySolverType & solver) :
+//			sz( solver.rhs.size()), data( new double[sz] )
+//		{
+//			solver.solveAndAssignTo( *this);
+//		}
 
 		~Vector() {
 			delete [] data;
@@ -125,6 +131,17 @@ namespace DenseLinAlg {
 			return *this;
 		}
 
+		Vector& operator=( const LazyVectorMaker & maker) {
+			maker.assignDataTo( *this);
+			return *this;
+		}
+
+//		template <typename LazySolverType>
+//		Vector& operator=(LazySolverType & solver) {
+//			solver.solveAndAssignTo( *this);
+//			return *this;
+//		}
+
 		// assigning and adding the lhs of a vector expression into this vector
 		template<typename Expr>
 		Vector& operator+=( const Expr& expr ) {
@@ -134,16 +151,66 @@ namespace DenseLinAlg {
 			return *this;
 		}
 
-		template <typename LazySolverType>
-		Vector& operator=(LazySolverType & solver) {
-			solver.solveAndAssignTo( *this);
-			return *this;
-		}
-
 	};
 
 
-	// Testing if data in an heap array can be a matrix object
+	class DiagonalMatrix
+	{
+	private:
+		const int sz;
+		double* data;
+
+	public:
+		template <typename Sig> struct result;
+
+		template <typename This, typename T>
+		struct result< This(T,T) > { typedef double type; };
+
+		template <typename This, typename T>
+		struct result< This(T) > { typedef double type; };
+
+		explicit DiagonalMatrix(int sz_ = 1, double iniVal = 0.0) :
+				sz( sz_), data( new double[sz] )
+		{
+			for (int i = 0; i < sz; i++) data[i] = iniVal;
+		}
+
+		DiagonalMatrix( const LazyDiagonalMatrixMaker & maker) :
+			sz( maker.columnSize()), data( new double[sz] )
+		{
+			maker.assignDataTo( *this);
+		}
+
+		~DiagonalMatrix() {
+			delete [] data;
+		}
+
+		int size() const { return sz; }
+		int rowSize() const { return sz; }
+		int columnSize() const { return sz; }
+
+		// accessing to an element of this vector
+		double& operator()(int i) { return data[i]; }
+		const double& operator()(int i) const { return data[i]; }
+
+		double operator()(int ri, int ci) const {
+			if ( ri == ci )  {
+				return data[ri];
+			} else {
+				return 0.0;
+			}
+		}
+
+		template<typename Expr>
+		DiagonalMatrix& operator=( const Expr& expr ) {
+			proto::_default<> trans;
+			for(int i=0; i < sz; ++i)
+				data[i] = trans( DiagMatExprGrammar()( expr(i) ) );
+			return *this;
+		}
+	};
+
+
 	class Matrix
 	{
 	private:
@@ -168,7 +235,7 @@ namespace DenseLinAlg {
 			std::cout << "Created" << std::endl;
 		}
 
-		Matrix(const Matrix& mat) :
+		Matrix( const Matrix& mat) :
 			rowSz( mat.rowSz), colSz( mat.colSz),
 			data( new double[rowSz*colSz] ), m( new double*[rowSz])
 		{
@@ -177,6 +244,14 @@ namespace DenseLinAlg {
 					for (int ci = 0; ci < colSz; ci++)
 						m[ri][ci] = mat.m[ri][ci];
 				std::cout << "Copied! " << std::endl;
+		}
+
+		Matrix( const LazyMatrixMaker & maker) :
+			rowSz( maker.rowSize()), colSz( maker.columnSize()),
+			data( new double[rowSz*colSz] ), m( new double*[rowSz])
+		{
+			for (int i = 0; i < rowSz; i++) m[i] = data + i*colSz;
+			maker.assignDataTo( *this);
 		}
 
 		~Matrix()
@@ -211,51 +286,6 @@ namespace DenseLinAlg {
 				for (int ci=0; ci < colSz; ci++ )
 					m[ri][ci] += trans( MatExprGrammar()( expr(ri, ci) ) );
 			return *this;
-		}
-	};
-
-	// Lazy function object for evaluating an element of
-	// the resultant vector from the multiplication of
-	// a matrix and vector objects.
-	//
-	// An expression like ( matrix * vector )(index) is transformed
-	// into the loop for calculating the dot product between
-	// the index'th row of the matrix and the vector.
-	struct LazyMatVecMult
-	{
-		Matrix const& m;
-		Vector const& v;
-		int mColSz;
-
-		typedef double result_type;
-		// typedef mpl::int_<1> proto_arity;
-
-		explicit LazyMatVecMult(Matrix const& mat, Vector const& vec) :
-		m( mat), v( vec), mColSz(mat.rowSize()) {}
-
-		LazyMatVecMult(LazyMatVecMult const& lazy) :
-			m(lazy.m), v(lazy.v), mColSz(lazy.mColSz) {}
-
-		result_type operator()(int index) const
-		{
-			result_type elm = 0.0;
-			for (int ci =0;  ci < mColSz; ci++)
-				elm += m(index, ci) * v(ci);
-			return elm;
-		}
-	};
-
-	// Callable transform object to make the lazy functor
-	// a proto exression for lazily evaluationg the multiplication
-	// of a matrix and a vector .
-	struct MatVecMult : proto::callable
-	{
-		typedef proto::terminal< LazyMatVecMult >::type result_type;
-
-		result_type
-		operator()( Matrix const& mat, Vector const& vec) const
-		{
-			return proto::as_expr( LazyMatVecMult(mat, vec) );
 		}
 	};
 

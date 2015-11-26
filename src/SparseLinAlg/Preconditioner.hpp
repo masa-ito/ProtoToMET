@@ -8,22 +8,27 @@
 #ifndef SPARSELINALG_PRECONDITIONER_HPP_
 #define SPARSELINALG_PRECONDITIONER_HPP_
 
+#include <DenseLinAlg/DenseLinAlg.hpp>
+
+namespace DLA = DenseLinAlg;
+
 namespace SparseLinAlg {
 
 	class AbstPreconditioner;
 
 
-	template <typename VecType>
-	struct LazyPreconditioner
+	struct LazyPreconditioner : DLA::LazyVectorMaker
 	{
 		AbstPreconditioner & precond;
-		const VecType & b;
+		const DLA::Vector & b;
 
-		explicit LazyPreconditioner( AbstPreconditioner & preconditioner,
-									const VecType & b_) :
+		explicit
+		LazyPreconditioner( AbstPreconditioner & preconditioner,
+							const DLA::Vector & b_) :
+					DLA::LazyVectorMaker( b_.size()),
 					precond( preconditioner) , b( b_) {}
 
-		void solveAndAssignTo(VecType & lhs) const
+		void assignDataTo(DLA::Vector & lhs) const
 		{
 			precond.solveAndAssign(b, lhs);
 		}
@@ -35,19 +40,16 @@ namespace SparseLinAlg {
 		explicit AbstPreconditioner() {}
 		virtual ~AbstPreconditioner() {}
 
-		template <typename VecType>
-		LazyPreconditioner< VecType>
-		solve( const VecType & b) {
-			return LazyPreconditioner< VecType>( *this, b);
+		LazyPreconditioner
+		solve( const DLA::Vector & b) {
+			return LazyPreconditioner( *this, b);
 		}
 
-		template <typename VecType>
-		virtual void solveAndAssign(const VecType& b,
-									VecType & lhs) const = 0;
+		virtual void solveAndAssign(const DLA::Vector & b,
+									DLA::Vector & lhs) const = 0;
 	};
 
 
-	template <typename MatType>
 	class DiagonalPreconditioner : public AbstPreconditioner
 	{
 	private :
@@ -55,6 +57,7 @@ namespace SparseLinAlg {
 		double *diagInv;
 
 	public :
+		template < typename MatType >
 		explicit DiagonalPreconditioner(const MatType & mat) :
 		sz(mat.rowSize()), diagInv( new double[sz])
 		{
@@ -66,9 +69,8 @@ namespace SparseLinAlg {
 			delete [] diagInv;
 		}
 
-		template <typename VecType>
-				virtual void solveAndAssign(const VecType& b,
-											VecType & lhs) const
+		virtual void solveAndAssign(const DLA::Vector & b,
+									DLA::Vector & lhs) const
 		{
 			for (int i = 0; i < sz; i++) lhs(i) = diagInv[i] * b(i);
 		}

@@ -8,24 +8,29 @@
 #ifndef SPARSELINALG_ITERSOLVER_HPP_
 #define SPARSELINALG_ITERSOLVER_HPP_
 
+#include <DenseLinAlg/DenseLinAlg.hpp>
+
+namespace DLA = DenseLinAlg;
+
 namespace SparseLinAlg {
 
 	class AbstIterSolver;
 
-	template <typename VecType>
-	struct LazyIterSolver
+	struct LazyIterSolver : DLA::LazyVectorMaker
 	{
 		AbstIterSolver & solver;
-		const VecType & b, iniGuess;
+		DLA::Vector & b, iniGuess;
 		const double criterion;
 
-		explicit LazyIterSolver( AbstIterSolver & solver_,
-							const VecType & b_, const VecType & iniGuess_,
-							const double convgergenceCriterion = 1.0e-5) :
+		explicit
+		LazyIterSolver( AbstIterSolver & solver_,
+						const DLA::Vector & b_, const DLA::Vector & iniGuess_,
+						const double convgergenceCriterion = 1.0e-5) :
+			DLA::LazyVectorMaker( b_.size() ),
 			solver(solver_), b( b_), iniGuess( iniGuess_),
 			criterion(convgergenceCriterion) {}
 
-		void solveAndAssignTo(VecType & lhs) const
+		void assignDataTo(DLA::Vector & lhs) const
 		{
 			solver.solveAndAssign(b, iniGuess, lhs, criterion);
 		}
@@ -37,19 +42,17 @@ namespace SparseLinAlg {
 		explicit AbstIterSolver() {}
 		virtual ~AbstIterSolver() {}
 
-		template <typename VecType>
-		LazyIterSolver< VecType>
-		solve( const VecType & b, const VecType & iniGuess,
+		LazyIterSolver
+		solve( const DLA::Vector & b, const DLA::Vector & iniGuess,
 				const double convgergenceCriterion = 1.0e-5)
 		{
-			return  LazyIterSolver< VecType>( *this,
+			return  LazyIterSolver( *this,
 							b, iniGuess, convgergenceCriterion);
 		}
 
-		template <typename VecType>
-		virtual void solveAndAssign(const VecType& b,
-								const VecType & iniGuess,
-								VecType & lhs,
+		virtual void solveAndAssign(const DLA::Vector & b,
+								const DLA::Vector & iniGuess,
+								DLA::Vector & lhs,
 								const double convgergenceCriterion) const = 0;
 	};
 
@@ -66,25 +69,24 @@ namespace SparseLinAlg {
 				const PreType & preconditioner ) :
 				coeff( coefficients), precond( preconditioner) {}
 
-		template <typename VecType>
-		virtual void solveAndAssign( const VecType& b,
-								const VecType & iniGuess,
-								VecType & lhs,
+		virtual void solveAndAssign( const DLA::Vector & b,
+								const DLA::Vector & iniGuess,
+								DLA::Vector & lhs,
 								const double convgergenceCriterion) const
 		{
-			VecType resid = b - coeff * iniGuess,
+			DLA::Vector resid = b - coeff * iniGuess,
 					z = precond.solve( resid);
 			double rho = resid.dot( z);
 
-			VecType p = z,
+			DLA::Vector p = z,
 					q = coeff * p;
 			double alpha = rho / p.dot(q);
 
 			lhs = iniGuess + alpha * p;
 			resid = resid - alpha * q;
 
-			double rhsAbs = b.abs();
-			while ( resid.abs() / rhsAbs >  convgergenceCriterion)
+			const double bAbs = b.abs();
+			while ( resid.abs() / bAbs >  convgergenceCriterion)
 			{
 				z = precond.solve( resid);
 				double prevRho = rho;
