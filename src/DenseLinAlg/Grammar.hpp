@@ -47,6 +47,21 @@ namespace DenseLinAlg {
 		proto::when< MatVecMultGrammar,
 					proto::_make_function( MatVecMultGrammar( proto::_),
 											proto::_state) >,
+		// Vector * double , or double * Vector
+		proto::when<
+			proto::multiplies< proto::terminal< Vector > ,
+							proto::terminal< double > >,
+			proto::_make_multiplies(
+				proto::_make_function( proto::_left, proto::_state),
+				proto::_right )
+		>,
+		proto::when<
+			proto::multiplies< proto::terminal< double >,
+							proto::terminal< Vector > >,
+			proto::_make_multiplies(
+				proto::_left,
+				proto::_make_function( proto::_right, proto::_state) )
+		>,
 		// VecElmGrammar +(-) VecElmGrammar
 		proto::plus< VecElmGrammar, VecElmGrammar> ,
 		proto::minus< VecElmGrammar, VecElmGrammar>
@@ -62,6 +77,11 @@ namespace DenseLinAlg {
 		// VecExprGrammar +(-) VecExprGrammar
 		proto::plus< VecExprGrammar, VecExprGrammar> ,
 		proto::minus< VecExprGrammar, VecExprGrammar>,
+		// Vector * double , or double * Vector
+		proto::multiplies< proto::terminal< Vector > ,
+						proto::terminal< double > >,
+		proto::multiplies< proto::terminal< double >,
+						proto::terminal< Vector > >,
 		// Matrix * Vector
 		MatVecMultGrammar
 	> {};

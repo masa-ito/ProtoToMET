@@ -14,18 +14,34 @@ namespace DLA = DenseLinAlg;
 
 namespace SparseLinAlg {
 
-	class AbstIterSolver;
+	struct LazyIterSolver;
+
+	class AbstIterSolver
+	{
+	public :
+		explicit AbstIterSolver() {}
+		virtual ~AbstIterSolver() {}
+
+		LazyIterSolver
+		solve( const DLA::Vector & b, const DLA::Vector & iniGuess,
+				const double convgergenceCriterion = 1.0e-5);
+
+		virtual void solveAndAssign(const DLA::Vector & b,
+								const DLA::Vector & iniGuess,
+								DLA::Vector & lhs,
+								double convgergenceCriterion) const = 0;
+	};
 
 	struct LazyIterSolver : DLA::LazyVectorMaker
 	{
 		AbstIterSolver & solver;
-		DLA::Vector & b, iniGuess;
+		const DLA::Vector & b, iniGuess;
 		const double criterion;
 
 		explicit
 		LazyIterSolver( AbstIterSolver & solver_,
 						const DLA::Vector & b_, const DLA::Vector & iniGuess_,
-						const double convgergenceCriterion = 1.0e-5) :
+						double convgergenceCriterion = 1.0e-5) :
 			DLA::LazyVectorMaker( b_.size() ),
 			solver(solver_), b( b_), iniGuess( iniGuess_),
 			criterion(convgergenceCriterion) {}
@@ -36,25 +52,14 @@ namespace SparseLinAlg {
 		}
 	};
 
-	class AbstIterSolver
+	LazyIterSolver
+	AbstIterSolver::solve( const DLA::Vector & b,
+			const DLA::Vector & iniGuess,
+			double convgergenceCriterion)
 	{
-	public :
-		explicit AbstIterSolver() {}
-		virtual ~AbstIterSolver() {}
-
-		LazyIterSolver
-		solve( const DLA::Vector & b, const DLA::Vector & iniGuess,
-				const double convgergenceCriterion = 1.0e-5)
-		{
-			return  LazyIterSolver( *this,
-							b, iniGuess, convgergenceCriterion);
-		}
-
-		virtual void solveAndAssign(const DLA::Vector & b,
-								const DLA::Vector & iniGuess,
-								DLA::Vector & lhs,
-								const double convgergenceCriterion) const = 0;
-	};
+		return  LazyIterSolver( *this,
+						b, iniGuess, convgergenceCriterion);
+	}
 
 
 	template <typename MatType, typename PreType>

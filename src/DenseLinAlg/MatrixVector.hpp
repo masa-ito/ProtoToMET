@@ -38,18 +38,20 @@ namespace DenseLinAlg {
 		: proto::extends<ExprType, ExprWrapper<ExprType>, Domain>
 	{
 		/* typedef double result_type; */
-		const int rowSz, colSz;
+
+		//const int rowSz, colSz;
 
 		explicit ExprWrapper(const ExprType& e)
-			: proto::extends<ExprType, ExprWrapper<ExprType>, Domain>(e),
-			  rowSz( e.rowSize()), colSz( e.columnSize())
+			: proto::extends<ExprType, ExprWrapper<ExprType>, Domain>(e) //,
+			  // rowSz( e.rowSize()), colSz( e.columnSize())
 		{}
 
-		int rowSize() const { return rowSz; }
-		int columnSize() const { return colSz; }
+		// int rowSize() const { return rowSz; }
+		// int columnSize() const { return colSz; }
 	};
 
 
+	struct LazyVectorMaker;
 
 	class Vector {
 		private:
@@ -62,32 +64,34 @@ namespace DenseLinAlg {
 		template <typename This, typename T>
 		struct result< This(T) > { typedef double type; };
 
-		explicit Vector(int sz_ = 1, double iniVal = 0.0) :
+		explicit Vector(int sz_, double iniVal) :
 			sz( sz_), data( new double[sz] ) {
 			for (int i = 0; i < sz; i++) data[i] = iniVal;
-			std::cout << "Created" << std::endl;
+			// std::cout << "Created" << std::endl;
+		}
+
+		// No initialization
+		explicit Vector(int sz_ = 1) :
+			sz( sz_), data( new double[sz] ) {
+			// std::cout << "Created" << std::endl;
 		}
 
 		Vector(const Vector& vec) :
 			sz( vec.sz), data( new double[sz] ) {
 			for (int i = 0; i < sz; i++) data[i] = vec.data[i];
-			std::cout << "Copied! " << std::endl;
+			// std::cout << "Copied! " << std::endl;
 		}
 
-		// assigning the lhs of a vector expression into this vector
-		template<typename Expr>
-		Vector( const Expr& expr ) :
-			sz( expr.columnSize()), data( new double[sz] ) {
-			proto::_default<> trans;
-			for(int i=0; i < sz; ++i)
-				data[i] = trans( VecExprGrammar()( expr(i) ) );
-		}
+//		// assigning the lhs of a vector expression into this vector
+//		template<typename Expr>
+//		Vector( const Expr& expr ) :
+//			sz( expr.columnSize()), data( new double[sz] ) {
+//			proto::_default<> trans;
+//			for(int i=0; i < sz; ++i)
+//				data[i] = trans( VecExprGrammar()( expr(i) ) );
+//		}
 
-		Vector( const LazyVectorMaker & maker) :
-			sz( maker.columnSize()), data( new double[sz] )
-		{
-			maker.assignDataTo( *this);
-		}
+		Vector( const LazyVectorMaker & maker);
 
 //		template <typename LazySolverType>
 //		Vector(LazySolverType & solver) :
@@ -131,10 +135,10 @@ namespace DenseLinAlg {
 			return *this;
 		}
 
-		Vector& operator=( const LazyVectorMaker & maker) {
-			maker.assignDataTo( *this);
-			return *this;
-		}
+		Vector& operator=( const LazyVectorMaker & maker); // {
+//			maker.assignDataTo( *this);
+//			return *this;
+//		}
 
 //		template <typename LazySolverType>
 //		Vector& operator=(LazySolverType & solver) {
@@ -153,6 +157,8 @@ namespace DenseLinAlg {
 
 	};
 
+
+	struct LazyDiagonalMatrixMaker;
 
 	class DiagonalMatrix
 	{
@@ -175,11 +181,11 @@ namespace DenseLinAlg {
 			for (int i = 0; i < sz; i++) data[i] = iniVal;
 		}
 
-		DiagonalMatrix( const LazyDiagonalMatrixMaker & maker) :
-			sz( maker.columnSize()), data( new double[sz] )
-		{
-			maker.assignDataTo( *this);
-		}
+		DiagonalMatrix( const LazyDiagonalMatrixMaker & maker); // :
+//			sz( maker.columnSize()), data( new double[sz] )
+//		{
+//			maker.assignDataTo( *this);
+//		}
 
 		~DiagonalMatrix() {
 			delete [] data;
@@ -210,6 +216,8 @@ namespace DenseLinAlg {
 		}
 	};
 
+
+	struct LazyMatrixMaker;
 
 	class Matrix
 	{
@@ -246,13 +254,13 @@ namespace DenseLinAlg {
 				std::cout << "Copied! " << std::endl;
 		}
 
-		Matrix( const LazyMatrixMaker & maker) :
-			rowSz( maker.rowSize()), colSz( maker.columnSize()),
-			data( new double[rowSz*colSz] ), m( new double*[rowSz])
-		{
-			for (int i = 0; i < rowSz; i++) m[i] = data + i*colSz;
-			maker.assignDataTo( *this);
-		}
+		Matrix( const LazyMatrixMaker & maker); // :
+//			rowSz( maker.rowSize()), colSz( maker.columnSize()),
+//			data( new double[rowSz*colSz] ), m( new double*[rowSz])
+//		{
+//			for (int i = 0; i < rowSz; i++) m[i] = data + i*colSz;
+//			maker.assignDataTo( *this);
+//		}
 
 		~Matrix()
 		{

@@ -28,10 +28,7 @@ namespace SparseLinAlg {
 					DLA::LazyVectorMaker( b_.size()),
 					precond( preconditioner) , b( b_) {}
 
-		void assignDataTo(DLA::Vector & lhs) const
-		{
-			precond.solveAndAssign(b, lhs);
-		}
+		void assignDataTo(DLA::Vector & lhs) const;
 	};
 
 	class AbstPreconditioner
@@ -48,6 +45,11 @@ namespace SparseLinAlg {
 		virtual void solveAndAssign(const DLA::Vector & b,
 									DLA::Vector & lhs) const = 0;
 	};
+
+	void LazyPreconditioner::assignDataTo(DLA::Vector & lhs) const
+	{
+		precond.solveAndAssign(b, lhs);
+	}
 
 
 	class DiagonalPreconditioner : public AbstPreconditioner
