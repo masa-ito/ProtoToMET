@@ -1,6 +1,7 @@
 
 all:	transformingMatrixVectorMultiplication \
-	transformingMatVecMultAndVecSub
+	transformingMatVecMultAndVecSub \
+	protoDeepCopyMatrixVectorExpr 
 
 
 INCDIR = -I..
@@ -10,5 +11,8 @@ transformingMatrixVectorMultiplication : transformingMatrixVectorMultiplication.
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 transformingMatVecMultAndVecSub : transformingMatVecMultAndVecSub.cpp
+	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
+
+protoDeepCopyMatrixVectorExpr : protoDeepCopyMatrixVectorExpr.cpp
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 

@@ -155,6 +155,15 @@ namespace DenseLinAlg {
 			return *this;
 		}
 
+		// assigning and subtracting the lhs of a vector expression into
+		// this vector
+		template<typename Expr>
+		Vector& operator-=( const Expr& expr ) {
+			proto::_default<> trans;
+			for(int i=0; i < sz; ++i)
+				data[i] -= trans( VecExprGrammar()( expr(i) ) );
+			return *this;
+		}
 	};
 
 
@@ -272,11 +281,11 @@ namespace DenseLinAlg {
 		int rowSize() const { return rowSz; }
 		int columnSize() const { return colSz; }
 
-		// accesing to a vector element
+		// accesing to a matrix element
 		double& operator()(int ri, int ci) { return m[ri][ci]; }
 		const double& operator()(int ri, int ci) const { return m[ri][ci]; }
 
-		// assigning the lhs of a vector expression into this vector
+		// assigning the lhs of a vector expression into this matrix
 		template<typename Expr>
 		Matrix& operator=( const Expr& expr ) {
 			proto::_default<> trans;
@@ -286,13 +295,24 @@ namespace DenseLinAlg {
 			return *this;
 		}
 
-		// assigning and adding the lhs of a vector expression into this vector
+		// assigning and adding the lhs of a vector expression into this matrix
 		template<typename Expr>
 		Matrix& operator+=( const Expr& expr ) {
 			proto::_default<> trans;
 			for(int ri=0; ri < rowSz; ri++)
 				for (int ci=0; ci < colSz; ci++ )
 					m[ri][ci] += trans( MatExprGrammar()( expr(ri, ci) ) );
+			return *this;
+		}
+
+		// assigning and subtracting the lhs of a vector expression into
+		// this matrix
+		template<typename Expr>
+		Matrix& operator-=( const Expr& expr ) {
+			proto::_default<> trans;
+			for(int ri=0; ri < rowSz; ri++)
+				for (int ci=0; ci < colSz; ci++ )
+					m[ri][ci] -= trans( MatExprGrammar()( expr(ri, ci) ) );
 			return *this;
 		}
 	};
