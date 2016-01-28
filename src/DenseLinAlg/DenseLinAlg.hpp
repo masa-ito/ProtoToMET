@@ -13,7 +13,7 @@
 
 #include <DenseLinAlg/Grammar.hpp>
 #include <DenseLinAlg/MatrixVector.hpp>
-
+#include <DenseLinAlg/LazyEvaluator.hpp>
 
 namespace mpl = boost::mpl;
 namespace proto = boost::proto;
@@ -24,9 +24,16 @@ namespace DenseLinAlg {
 	// Define a trait for detecting linear algebraic terminals, to be used
 	// by the BOOST_PROTO_DEFINE_OPERATORS macro below.
 	template<typename> struct IsExpr  : mpl::false_ {};
-	template<> struct IsExpr< Vector> : mpl::true_  {};
-	template<> struct IsExpr< Matrix> : mpl::true_  {};
-	template<> struct IsExpr< LazyMatVecMult> : mpl::true_  {};
+
+	template<> struct IsExpr< Vector > : mpl::true_  {};
+	template<> struct IsExpr< Matrix > : mpl::true_  {};
+	template<> struct IsExpr< DiagonalMatrix > : mpl::true_  {};
+
+	template<> struct IsExpr< LazyMatVecMult > : mpl::true_  {};
+
+	// template<> struct IsExpr< LazyVectorMaker > : mpl::true_  {};
+	template<> struct IsExpr< LazyMatrixMaker > : mpl::true_  {};
+	template<> struct IsExpr< LazyDiagonalMatrixMaker > : mpl::true_  {};
 
 	// This defines all the overloads to make expressions involving
 	// Vector and Matrix objects to build Proto's expression templates.

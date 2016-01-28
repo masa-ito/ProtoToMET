@@ -19,6 +19,7 @@ namespace DenseLinAlg {
 
 	class Vector;
 	class Matrix;
+	class DiagonalMatrix;
 
 
 	// Callable transform object to make a proto exression
@@ -46,6 +47,21 @@ namespace DenseLinAlg {
 		proto::when< MatVecMultGrammar,
 					proto::_make_function( MatVecMultGrammar( proto::_),
 											proto::_state) >,
+		// Vector * double , or double * Vector
+		proto::when<
+			proto::multiplies< proto::terminal< Vector > ,
+							proto::terminal< double > >,
+			proto::_make_multiplies(
+				proto::_make_function( proto::_left, proto::_state),
+				proto::_right )
+		>,
+		proto::when<
+			proto::multiplies< proto::terminal< double >,
+							proto::terminal< Vector > >,
+			proto::_make_multiplies(
+				proto::_left,
+				proto::_make_function( proto::_right, proto::_state) )
+		>,
 		// VecElmGrammar +(-) VecElmGrammar
 		proto::plus< VecElmGrammar, VecElmGrammar> ,
 		proto::minus< VecElmGrammar, VecElmGrammar>
@@ -61,8 +77,16 @@ namespace DenseLinAlg {
 		// VecExprGrammar +(-) VecExprGrammar
 		proto::plus< VecExprGrammar, VecExprGrammar> ,
 		proto::minus< VecExprGrammar, VecExprGrammar>,
+		// Vector * double , or double * Vector
+		proto::multiplies< proto::terminal< Vector > ,
+						proto::terminal< double > >,
+		proto::multiplies< proto::terminal< double >,
+						proto::terminal< Vector > >,
 		// Matrix * Vector
-		MatVecMultGrammar
+		MatVecMultGrammar,
+		// DiagonalMatrix * VecExprGrammar
+		proto::multiplies< proto::terminal< DiagonalMatrix >,
+						VecExprGrammar >
 	> {};
 
 	// The transformation rule for matrix element expressions
@@ -76,6 +100,49 @@ namespace DenseLinAlg {
 		proto::minus< MatElmGrammar, MatElmGrammar>
 	> {};
 
+	// The transformation rule for diagonal matrix element expressions
+	// with two indices
+	struct DiagMatElmTwoIdxGrammar : proto::or_<
+		// DiagonalMatrix
+		proto::when< proto::terminal< DiagonalMatrix>,
+					proto::_make_function( proto::_,
+											proto::_state, proto::_data) >,
+		// DiagMatElmTwoIdxGrammar +(-) DiagMatElmTwoIdxGrammar
+		proto::plus< DiagMatElmTwoIdxGrammar, DiagMatElmTwoIdxGrammar >,
+		proto::minus< DiagMatElmTwoIdxGrammar, DiagMatElmTwoIdxGrammar >
+	> {};
+
+	// The transformation rule for diagonal matrix element expressions
+	// with one index
+	struct DiagMatElmOneIdxGrammar : proto::or_<
+		// DiagonalMatrix
+		proto::when< proto::terminal< DiagonalMatrix>,
+					proto::_make_function( proto::_, proto::_state) >,
+		// DiagMatElmOneIdxGrammar +(-) DiagMatElmOneIdxGrammar
+		proto::plus< DiagMatElmOneIdxGrammar, DiagMatElmOneIdxGrammar >,
+		proto::minus< DiagMatElmOneIdxGrammar, DiagMatElmOneIdxGrammar >
+	> {};
+
+	// The tranformation rule for diagonal matrix expressions
+	struct DiagMatExprGrammar : proto::or_<
+		// DiagMatElmTwoIdxGrammar( rowIndex, columnIndex )
+		proto::when<
+			proto::function< DiagMatElmTwoIdxGrammar, proto::_, proto::_ >,
+			DiagMatElmTwoIdxGrammar( proto::_child0,
+									proto::_child1, proto::_child2)
+		>,
+		// DiagMatElmOneIdxGrammar( index )
+		proto::when<
+			proto::function< DiagMatElmOneIdxGrammar, proto::_ >,
+			DiagMatElmTwoIdxGrammar( proto::_child0, proto::_child1)
+		>,
+		// DiagonalMatrix
+		proto::terminal< DiagonalMatrix >,
+		// DiagMatExprGrammar +(-) DiagMatExprGrammar
+		proto::plus< DiagMatExprGrammar, DiagMatExprGrammar >,
+		proto::minus< DiagMatExprGrammar, DiagMatExprGrammar>
+	> {};
+
 	// The tranformation rule for matrix expressions
 	struct MatExprGrammar : proto::or_<
 		// MatElmGrammar( rowIndex, columnIndex )
@@ -83,8 +150,14 @@ namespace DenseLinAlg {
 				proto::function< MatElmGrammar, proto::_ , proto::_ >,
 				MatElmGrammar(proto::_child0, proto::_child1, proto::_child2)
 			>,
-		// matrix
+		// Matrix
 		proto::terminal< Matrix >,
+		// MatExprGrammar * MatExprGrammar
+		proto::multiplies< MatExprGrammar, MatExprGrammar >,
+		// MatExprGrammar * DiagMatExprGrammar
+		proto::multiplies< MatExprGrammar, DiagMatExprGrammar >,
+		// DigaMatExprGrammar * MatExprGrammar
+		proto::multiplies< DiagMatExprGrammar, MatExprGrammar >,
 		// MatExprGrammar +(-) MatExprGrammar
 		proto::plus< MatExprGrammar, MatExprGrammar> ,
 		proto::minus< MatExprGrammar, MatExprGrammar>
@@ -93,7 +166,8 @@ namespace DenseLinAlg {
 	// The tranformation rule for linear algebraic expressions
 	struct ExprGrammar : proto::or_<
 		VecExprGrammar,
-		MatExprGrammar
+		MatExprGrammar,
+		DiagMatExprGrammar
 	> {};
 
 
