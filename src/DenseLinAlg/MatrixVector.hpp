@@ -39,11 +39,11 @@ namespace DenseLinAlg {
 	{
 		/* typedef double result_type; */
 
-		//const int rowSz, colSz;
+		// const int rowSz, colSz;
 
 		explicit ExprWrapper(const ExprType& e)
-			: proto::extends<ExprType, ExprWrapper<ExprType>, Domain>(e) //,
-			  // rowSz( e.rowSize()), colSz( e.columnSize())
+			: proto::extends<ExprType, ExprWrapper<ExprType>, Domain>(e) /*,
+			  rowSz( e.rowSize()), colSz( e.columnSize()) */
 		{}
 
 		// int rowSize() const { return rowSz; }
@@ -51,7 +51,24 @@ namespace DenseLinAlg {
 	};
 
 
-	struct LazyVectorMaker;
+	class Vector;
+
+	template < typename Derived >
+	struct LazyVectorMaker
+	{
+		const int sz;
+
+		explicit LazyVectorMaker( int size) : sz( size) {}
+		virtual ~LazyVectorMaker() {}
+
+		int rowSize() const { return 1; }
+		int columnSize() const { return sz; }
+		int size() const { return sz; }
+
+		void assignDataTo(Vector& lhs) const {
+			static_cast< const Derived & >( *this).assignDataTo_derived( lhs);
+		}
+	};
 
 	class Vector {
 		private:
@@ -82,22 +99,20 @@ namespace DenseLinAlg {
 			// std::cout << "Copied! " << std::endl;
 		}
 
+		template < typename Derived >
+		Vector( const LazyVectorMaker< Derived > & maker) :
+			sz( maker.columnSize()), data( new double[sz] )
+		{
+			maker.assignDataTo( *this);
+		}
+
 //		// assigning the lhs of a vector expression into this vector
-//		template<typename Expr>
-//		Vector( const Expr& expr ) :
+//		template< typename Expr >
+//		Vector( const ExprWrapper< Expr > & expr ) :
 //			sz( expr.columnSize()), data( new double[sz] ) {
 //			proto::_default<> trans;
 //			for(int i=0; i < sz; ++i)
 //				data[i] = trans( VecExprGrammar()( expr(i) ) );
-//		}
-
-		Vector( const LazyVectorMaker & maker);
-
-//		template <typename LazySolverType>
-//		Vector(LazySolverType & solver) :
-//			sz( solver.rhs.size()), data( new double[sz] )
-//		{
-//			solver.solveAndAssignTo( *this);
 //		}
 
 		~Vector() {
@@ -127,18 +142,20 @@ namespace DenseLinAlg {
 		const double& operator()(int i) const { return data[i]; }
 
 		// assigning the lhs of a vector expression into this vector
-		template<typename Expr>
-		Vector& operator=( const Expr& expr ) {
+		template < typename Expr >
+		Vector& operator=( const ExprWrapper< Expr >& expr ) {
 			proto::_default<> trans;
 			for(int i=0; i < sz; ++i)
 				data[i] = trans( VecExprGrammar()( expr(i) ) );
 			return *this;
 		}
 
-		Vector& operator=( const LazyVectorMaker & maker); // {
-//			maker.assignDataTo( *this);
-//			return *this;
-//		}
+		template < typename Derived >
+		Vector& operator=( const LazyVectorMaker< Derived > & maker) {
+			maker.assignDataTo( *this);
+			return *this;
+		}
+
 
 //		template <typename LazySolverType>
 //		Vector& operator=(LazySolverType & solver) {

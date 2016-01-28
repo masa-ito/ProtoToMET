@@ -24,7 +24,7 @@ namespace SparseLinAlg {
 
 		LazyIterSolver
 		solve( const DLA::Vector & b, const DLA::Vector & iniGuess,
-				const double convgergenceCriterion = 1.0e-5);
+				const double convgergenceCriterion = 1.0e-5) const;
 
 		virtual void solveAndAssign(const DLA::Vector & b,
 								const DLA::Vector & iniGuess,
@@ -32,21 +32,21 @@ namespace SparseLinAlg {
 								double convgergenceCriterion) const = 0;
 	};
 
-	struct LazyIterSolver : DLA::LazyVectorMaker
+	struct LazyIterSolver : public DLA::LazyVectorMaker< LazyIterSolver >
 	{
-		AbstIterSolver & solver;
+		const AbstIterSolver & solver;
 		const DLA::Vector & b, iniGuess;
 		const double criterion;
 
 		explicit
-		LazyIterSolver( AbstIterSolver & solver_,
+		LazyIterSolver( const AbstIterSolver & solver_,
 						const DLA::Vector & b_, const DLA::Vector & iniGuess_,
 						double convgergenceCriterion = 1.0e-5) :
-			DLA::LazyVectorMaker( b_.size() ),
+			DLA::LazyVectorMaker< LazyIterSolver >( b_.size() ),
 			solver(solver_), b( b_), iniGuess( iniGuess_),
 			criterion(convgergenceCriterion) {}
 
-		void assignDataTo(DLA::Vector & lhs) const
+		void assignDataTo_derived(DLA::Vector & lhs) const
 		{
 			solver.solveAndAssign(b, iniGuess, lhs, criterion);
 		}
@@ -55,7 +55,7 @@ namespace SparseLinAlg {
 	LazyIterSolver
 	AbstIterSolver::solve( const DLA::Vector & b,
 			const DLA::Vector & iniGuess,
-			double convgergenceCriterion)
+			double convgergenceCriterion) const
 	{
 		return  LazyIterSolver( *this,
 						b, iniGuess, convgergenceCriterion);
@@ -79,12 +79,15 @@ namespace SparseLinAlg {
 								DLA::Vector & lhs,
 								const double convgergenceCriterion) const
 		{
-			DLA::Vector resid = b - coeff * iniGuess,
-					z = precond.solve( resid);
+			DLA::Vector resid( b.columnSize()), z( b.columnSize()),
+					q( b.columnSize());
+
+			resid = b - coeff * iniGuess;
+			z = precond.solve( resid);
 			double rho = resid.dot( z);
 
-			DLA::Vector p = z,
-					q = coeff * p;
+			DLA::Vector p = z;
+			q = coeff * p;
 			double alpha = rho / p.dot(q);
 
 			lhs = iniGuess + alpha * p;
@@ -110,8 +113,6 @@ namespace SparseLinAlg {
 	};
 
 }
-
-
 
 
 

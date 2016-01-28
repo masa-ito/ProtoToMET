@@ -17,18 +17,20 @@ namespace SparseLinAlg {
 	class AbstPreconditioner;
 
 
-	struct LazyPreconditioner : DLA::LazyVectorMaker
+	struct LazyPreconditioner :
+			public DLA::LazyVectorMaker< LazyPreconditioner >
 	{
-		AbstPreconditioner & precond;
+		const AbstPreconditioner & precond;
 		const DLA::Vector & b;
 
 		explicit
-		LazyPreconditioner( AbstPreconditioner & preconditioner,
+		LazyPreconditioner( const AbstPreconditioner & preconditioner,
 							const DLA::Vector & b_) :
-					DLA::LazyVectorMaker( b_.size()),
+					DLA::LazyVectorMaker< LazyPreconditioner>( b_.size()),
 					precond( preconditioner) , b( b_) {}
 
-		void assignDataTo(DLA::Vector & lhs) const;
+		void assignDataTo_derived(DLA::Vector & lhs) const;
+
 	};
 
 	class AbstPreconditioner
@@ -38,7 +40,7 @@ namespace SparseLinAlg {
 		virtual ~AbstPreconditioner() {}
 
 		LazyPreconditioner
-		solve( const DLA::Vector & b) {
+		solve( const DLA::Vector & b) const {
 			return LazyPreconditioner( *this, b);
 		}
 
@@ -46,7 +48,7 @@ namespace SparseLinAlg {
 									DLA::Vector & lhs) const = 0;
 	};
 
-	void LazyPreconditioner::assignDataTo(DLA::Vector & lhs) const
+	void LazyPreconditioner::assignDataTo_derived(DLA::Vector & lhs) const
 	{
 		precond.solveAndAssign(b, lhs);
 	}
@@ -63,7 +65,7 @@ namespace SparseLinAlg {
 		explicit DiagonalPreconditioner(const MatType & mat) :
 		sz(mat.rowSize()), diagInv( new double[sz])
 		{
-			for (int i = 0; i < sz; i++) diagInv = 1.0 / mat(i, i);
+			for (int i = 0; i < sz; i++) diagInv[ i] = 1.0 / mat(i, i);
 		}
 
 		virtual ~DiagonalPreconditioner()
