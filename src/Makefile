@@ -10,8 +10,8 @@ all:	helloWorld lazyVector \
 	transformingVectorOnHeapArrayUsingFunctionType \
 	transformingMatrixWithHeapArray \
 	transformingMatrixAndVector \
-	adaptingMyMatrixAndVectorClassesToProto \
-	diagPrecondConjGrad_IntroToCFD_Exam4_3 \
+	adaptingMyMatrixAndVectorClassesToProto 
+
 
 INCDIR = -I.
 CPP11STD = -std=c++11
@@ -72,9 +72,6 @@ adaptingMyMatrixAndVectorClassesToProto : adaptingMyMatrixAndVectorClassesToProt
 	${CXX} ${CPP11STD} $< -o $@
 
 #
-
-diagPrecondConjGrad_IntroToCFD_Exam4_3 : diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp
-	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 
 

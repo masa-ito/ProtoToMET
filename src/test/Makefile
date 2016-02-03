@@ -1,7 +1,8 @@
 
 all:	transformingMatrixVectorMultiplication \
 	transformingMatVecMultAndVecSub \
-	protoDeepCopyMatrixVectorExpr 
+	protoDeepCopyMatrixVectorExpr \
+	diagPrecondConjGrad_IntroToCFD_Exam4_3 
 
 
 INCDIR = -I..
@@ -14,5 +15,8 @@ transformingMatVecMultAndVecSub : transformingMatVecMultAndVecSub.cpp
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 protoDeepCopyMatrixVectorExpr : protoDeepCopyMatrixVectorExpr.cpp
+	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
+
+diagPrecondConjGrad_IntroToCFD_Exam4_3 : diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
