@@ -1,6 +1,13 @@
 /*
  * diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp
  *
+ * ref) H. K. Versteeg and W. Malalasekera,
+ *     "An Introduction  to Computational Fluid Dynamics,
+ *     The Finite Volume Method", 2nd Ed.
+ *     Pearson Educational Limited 1995, 2007.
+ *
+ *     Example 4.3
+ *
  *  Created on: 2016/01/27
  *      Author: Masakatsu ITO
  */
