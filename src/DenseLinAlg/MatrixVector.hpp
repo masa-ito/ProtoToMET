@@ -184,7 +184,25 @@ namespace DenseLinAlg {
 	};
 
 
-	struct LazyDiagonalMatrixMaker;
+	class DiagonalMatrix;
+
+	template < typename Derived >
+	struct LazyDiagonalMatrixMaker
+	{
+		const int sz;
+
+		explicit LazyDiagonalMatrixMaker( int size) : sz( size) {}
+		virtual ~LazyDiagonalMatrixMaker() {}
+
+		int rowSize() const { return sz; }
+		int columnSize() const { return sz; }
+		int size() const { return sz; }
+
+		void assignDataTo(DiagonalMatrix& lhs) const {
+			static_cast< const Derived & >( *this).assignDataTo_derived( lhs);
+		}
+	};
+
 
 	class DiagonalMatrix
 	{
@@ -207,7 +225,7 @@ namespace DenseLinAlg {
 			for (int i = 0; i < sz; i++) data[i] = iniVal;
 		}
 
-		DiagonalMatrix( const LazyDiagonalMatrixMaker & maker); // :
+//		DiagonalMatrix( const LazyDiagonalMatrixMaker & maker); // :
 //			sz( maker.columnSize()), data( new double[sz] )
 //		{
 //			maker.assignDataTo( *this);
@@ -233,17 +251,42 @@ namespace DenseLinAlg {
 			}
 		}
 
-		template<typename Expr>
-		DiagonalMatrix& operator=( const Expr& expr ) {
+		template< typename Expr >
+		DiagonalMatrix& operator=( const ExprWrapper< Expr >& expr ) {
 			proto::_default<> trans;
 			for(int i=0; i < sz; ++i)
 				data[i] = trans( DiagMatExprGrammar()( expr(i) ) );
 			return *this;
 		}
+
+		template < typename Derived >
+		DiagonalMatrix&
+		operator=( const LazyDiagonalMatrixMaker< Derived >& maker ) {
+			maker.assignDataTo( *this);
+			return *this;
+		}
 	};
 
 
-	struct LazyMatrixMaker;
+	class Matrix;
+
+	template < typename Derived >
+	struct LazyMatrixMaker
+	{
+		const int rowSz, colSz;
+
+		explicit LazyMatrixMaker( int rowSize, int columnSize) :
+				rowSz( rowSize), colSz( columnSize) {}
+		virtual ~LazyMatrixMaker() {}
+
+		int rowSize() const { return rowSz; }
+		int columnSize() const { return colSz; }
+
+		void assignDataTo(Matrix& lhs) const {
+			static_cast< const Derived & >( *this).assignDataTo_derived( lhs);
+		}
+	};
+
 
 	class Matrix
 	{
@@ -280,7 +323,7 @@ namespace DenseLinAlg {
 				std::cout << "Copied! " << std::endl;
 		}
 
-		Matrix( const LazyMatrixMaker & maker); // :
+//		Matrix( const LazyMatrixMaker & maker); // :
 //			rowSz( maker.rowSize()), colSz( maker.columnSize()),
 //			data( new double[rowSz*colSz] ), m( new double*[rowSz])
 //		{
@@ -304,11 +347,17 @@ namespace DenseLinAlg {
 
 		// assigning the lhs of a vector expression into this matrix
 		template<typename Expr>
-		Matrix& operator=( const Expr& expr ) {
+		Matrix& operator=( const ExprWrapper< Expr >& expr ) {
 			proto::_default<> trans;
 			for(int ri=0; ri < rowSz; ri++)
 				for (int ci=0; ci < colSz; ci++ )
 					m[ri][ci] = trans( MatExprGrammar()( expr(ri, ci) ) );
+			return *this;
+		}
+
+		template < typename Derived >
+		Matrix& operator=( const LazyMatrixMaker< Derived >& maker) {
+			maker.assignDataTo( *this);
 			return *this;
 		}
 

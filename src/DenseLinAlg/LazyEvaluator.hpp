@@ -84,51 +84,6 @@ namespace DenseLinAlg {
 //	};
 
 
-
-	struct LazyDiagonalMatrixMaker
-	{
-		const int sz;
-
-		explicit LazyDiagonalMatrixMaker( int size) : sz( size) {}
-		virtual ~LazyDiagonalMatrixMaker() {}
-
-		int rowSize() const { return sz; }
-		int columnSize() const { return sz; }
-		int size() const { return sz; }
-
-		virtual void assignDataTo(DiagonalMatrix& lhs) const = 0;
-	};
-
-	DiagonalMatrix::DiagonalMatrix( const LazyDiagonalMatrixMaker & maker) :
-		sz( maker.columnSize()), data( new double[sz] )
-	{
-		maker.assignDataTo( *this);
-	}
-
-
-	struct LazyMatrixMaker
-	{
-		const int rowSz, colSz;
-
-		explicit LazyMatrixMaker( int rowSize, int columnSize) :
-				rowSz( rowSize), colSz( columnSize) {}
-		virtual ~LazyMatrixMaker() {}
-
-		int rowSize() const { return rowSz; }
-		int columnSize() const { return colSz; }
-
-		virtual void assignDataTo(Matrix& lhs) const = 0;
-	};
-
-	Matrix::Matrix( const LazyMatrixMaker & maker) :
-		rowSz( maker.rowSize()), colSz( maker.columnSize()),
-		data( new double[rowSz*colSz] ), m( new double*[rowSz])
-	{
-		for (int i = 0; i < rowSz; i++) m[i] = data + i*colSz;
-		maker.assignDataTo( *this);
-	}
-
-
 }
 
 

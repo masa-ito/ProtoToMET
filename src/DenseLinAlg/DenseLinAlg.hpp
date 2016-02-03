@@ -32,8 +32,8 @@ namespace DenseLinAlg {
 	template<> struct IsExpr< LazyMatVecMult > : mpl::true_  {};
 
 	// template<> struct IsExpr< LazyVectorMaker > : mpl::true_  {};
-	template<> struct IsExpr< LazyMatrixMaker > : mpl::true_  {};
-	template<> struct IsExpr< LazyDiagonalMatrixMaker > : mpl::true_  {};
+	// template<> struct IsExpr< LazyMatrixMaker > : mpl::true_  {};
+	// template<> struct IsExpr< LazyDiagonalMatrixMaker > : mpl::true_  {};
 
 	// This defines all the overloads to make expressions involving
 	// Vector and Matrix objects to build Proto's expression templates.
