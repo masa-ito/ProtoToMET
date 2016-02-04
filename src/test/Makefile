@@ -1,6 +1,7 @@
 
 all:	transformingMatrixVectorMultiplication \
 	transformingMatVecMultAndVecSub \
+	transformingDiagMatVecMult \
 	protoDeepCopyMatrixVectorExpr \
 	diagPrecondConjGrad_IntroToCFD_Exam4_3 
 
@@ -12,6 +13,9 @@ transformingMatrixVectorMultiplication : transformingMatrixVectorMultiplication.
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 transformingMatVecMultAndVecSub : transformingMatVecMultAndVecSub.cpp
+	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
+
+transformingDiagMatVecMult : transformingDiagMatVecMult.cpp
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 protoDeepCopyMatrixVectorExpr : protoDeepCopyMatrixVectorExpr.cpp
