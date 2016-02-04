@@ -31,6 +31,8 @@ namespace DenseLinAlg {
 
 	template<> struct IsExpr< LazyMatVecMult > : mpl::true_  {};
 
+	template<> struct IsExpr< LazyMatDiagmatMatMult > : mpl::true_  {};
+
 	// template<> struct IsExpr< LazyVectorMaker > : mpl::true_  {};
 	// template<> struct IsExpr< LazyMatrixMaker > : mpl::true_  {};
 	// template<> struct IsExpr< LazyDiagonalMatrixMaker > : mpl::true_  {};

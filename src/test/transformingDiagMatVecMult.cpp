@@ -33,6 +33,7 @@ int main()
 
 	result = diag * vec;
 
+	// The result should be ( 1.1, 4.4, 9.9).
 	std::cout << result(0) << " " << result(1) << " " << result(2) <<
 			std::endl;
 

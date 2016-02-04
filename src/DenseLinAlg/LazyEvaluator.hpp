@@ -24,7 +24,7 @@ namespace DenseLinAlg {
 
 	// Lazy function object for evaluating an element of
 	// the resultant vector from the multiplication of
-	// a matrix and vector objects.
+	// matrix and vector objects.
 	//
 	// An expression like ( matrix * vector )(index) is transformed
 	// into the loop for calculating the dot product between
@@ -33,15 +33,15 @@ namespace DenseLinAlg {
 	{
 		Matrix const& m;
 		Vector const& v;
-		int mColSz;
+		const int mColSz;
 
 		typedef double result_type;
 		// typedef mpl::int_<1> proto_arity;
 
 		explicit LazyMatVecMult(Matrix const& mat, Vector const& vec) :
-		m( mat), v( vec), mColSz(mat.rowSize()) {}
+			m( mat), v( vec), mColSz(mat.rowSize()) {}
 
-		LazyMatVecMult(LazyMatVecMult const& lazy) :
+		LazyMatVecMult( LazyMatVecMult const& lazy) :
 			m(lazy.m), v(lazy.v), mColSz(lazy.mColSz) {}
 
 		result_type operator()(int index) const
@@ -68,22 +68,89 @@ namespace DenseLinAlg {
 	};
 
 
-//	struct LazyDoubleToVector
-//	{
-//		const double val;
-//		const int sz;
-//
-//		explicit LazyDoubleToVector(double val_, int size) :
-//				val( val_), sz( size) {}
-//
-//		int rowSize() const { return 1; }
-//		int columnSize() const { return sz; }
-//		int size() const { return sz; }
-//
-//		double operator()(int i) const { return val; }
-//	};
+	// Lazy function object for evaluating an element of
+	// the resultant vector from the multiplication of
+	// a matrix and a diagonal matrix and a matrix
+	struct LazyMatDiagmatMatMult
+	{
+		Matrix const & pre;
+		DiagonalMatrix const & diag;
+		Matrix const & post;
+		const int sz;
+
+		typedef double result_type;
+
+		explicit LazyMatDiagmatMatMult(Matrix const & pre_,
+			DiagonalMatrix const & diag_, Matrix const & post_) :
+			pre( pre_), diag( diag_), post( post_), sz( diag_.size())
+		{}
+
+		LazyMatDiagmatMatMult( LazyMatDiagmatMatMult const & lazy) :
+			pre( lazy.pre), diag( lazy.diag), post( lazy.post), sz( lazy.sz)
+		{}
+
+		result_type operator()(int ri, int ci) const
+		{
+			result_type elm = 0.0;
+			for (int k = 0; k < sz; k++)
+				elm += pre( ri, k) * diag( k) * post( k, ci);
+			return elm;
+		}
+	};
 
 
+	// Callable transform object to make the lazy functor
+	// a proto exression for lazily evaluationg the multiplication
+	// of a matrix and a diagonal matrix and a matrix
+	struct MatDiagmatMatMult : proto::callable
+	{
+		typedef proto::terminal< LazyMatDiagmatMatMult >::type result_type;
+
+		result_type
+		operator()( Matrix const& pre, DiagonalMatrix const & diag,
+				Matrix const& post) const
+		{
+			return proto::as_expr( LazyMatDiagmatMatMult(pre, diag, post) );
+		}
+
+
+		/* typedef double result_type;
+		template < typename Sig > struct result;
+
+		template < typename This, typename T1, typename T2, typename T3,
+					typename T4, typename T5 >
+		struct result< This(T1, T2, T3, T4, T5) > { typedef double type; };
+
+		result_type
+		operator()( Matrix const& pre, DiagonalMatrix const & diag,
+				Matrix const& post, int ri, int ci) const
+		{
+			result_type elm = 0.0;
+			for (int k = 0; k < diag.size(); k++)
+				elm += pre( ri, k) * diag( k) * post( k, ci);
+			return elm;
+		} */
+	};
+
+	/*
+	struct LazyMatDiagmatMatMult
+	{
+		typedef double result_type;
+
+		explicit LazyMatDiagmatMatMult() {}
+		LazyMatDiagmatMatMult( LazyMatDiagmatMatMult const & lazy) {}
+
+		result_type
+		operator()( Matrix const& pre, DiagonalMatrix const & diag,
+					Matrix const& post, int ri, int ci) const
+		{
+			result_type elm = 0.0;
+			for (int k = 0; k < diag.size(); k++)
+				elm += pre( ri, k) * diag( k) * post( k, ci);
+			return elm;
+		}
+	};
+	*/
 }
 
 

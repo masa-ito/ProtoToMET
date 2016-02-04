@@ -53,7 +53,8 @@ namespace DenseLinAlg {
 							proto::terminal< double > >,
 			proto::_make_multiplies(
 				proto::_make_function( proto::_left, proto::_state),
-				proto::_right )
+				proto::_right
+			)
 		>,
 		// double * Vector
 		proto::when<
@@ -61,7 +62,8 @@ namespace DenseLinAlg {
 							proto::terminal< Vector > >,
 			proto::_make_multiplies(
 				proto::_left,
-				proto::_make_function( proto::_right, proto::_state) )
+				proto::_make_function( proto::_right, proto::_state)
+			)
 		>,
 		// DiagonalMatrix * Vector
 		proto::when<
@@ -99,12 +101,35 @@ namespace DenseLinAlg {
 						VecExprGrammar >
 	> {};
 
+	struct MatDiagmatMatMult;
+	// struct LazyMatDiagmatMatMult;
+
 	// The transformation rule for matrix element expressions
 	struct MatElmGrammar : proto::or_<
 		// Matrix
-		proto::when< proto::terminal< Matrix>,
+		proto::when< proto::terminal< Matrix >,
 					proto::_make_function( proto::_,
 										proto::_state, proto::_data) >,
+
+		// Matrix * DiagonalMatrix * Matrix
+		proto::when<
+			proto::multiplies<
+				proto::multiplies<
+					proto::terminal< Matrix >,
+					proto::terminal< DiagonalMatrix >
+				>,
+				proto::terminal< Matrix >
+			>,
+			proto::_make_function(
+				MatDiagmatMatMult(
+						proto::_value( proto::_left( proto::_left ) ),
+						proto::_value( proto::_right( proto::_left) ),
+						proto::_value( proto::_right )
+				),
+				proto::_state, proto::_data
+			)
+		>,
+
 		// MatElmGrammar +(-) MatElmGrammar
 		proto::plus< MatElmGrammar, MatElmGrammar> ,
 		proto::minus< MatElmGrammar, MatElmGrammar>
