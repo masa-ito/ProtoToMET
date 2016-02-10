@@ -91,7 +91,7 @@ namespace SparseLinAlg {
 			double alpha = rho / p.dot(q);
 
 			lhs = iniGuess + alpha * p;
-			resid -= - alpha * q;
+			resid -= alpha * q;
 
 			const double bAbs = b.abs();
 			while ( resid.abs() / bAbs >  convgergenceCriterion)

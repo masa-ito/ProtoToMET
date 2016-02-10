@@ -10,10 +10,10 @@
 #include <iostream>
 
 #include <DenseLinAlg/DenseLinAlg.hpp>
-#include <SparseLinAlg/SparseLinAlg.hpp>
+// #include <SparseLinAlg/SparseLinAlg.hpp>
 
 namespace DLA = DenseLinAlg;
-namespace SLA = SparseLinAlg;
+// namespace SLA = SparseLinAlg;
 
 // invDiag = inverse matrix of ( diagonal part of coeff )
 void makePreconditioner(double * invDiag, double** const coeff, int sz)
@@ -59,7 +59,7 @@ void matMultVec( double* q,
 double dot( double * const p, double * const q, int sz)
 {
 	double d = p[0] * q[0];
-	for (int ri = 1; ri < sz; sz++) d += p[ri]*q[ri];
+	for (int ri = 1; ri < sz; ri++) d += p[ri]*q[ri];
 	return d;
 }
 
@@ -108,7 +108,7 @@ namespace DenseLinAlg {
 
 		makePreconditioner(invDiag, coeff, sz);
 
-		vecMinusMatMultVec( resid, b, coeff, ans, sz);
+		vecMinusMatMultVec( resid, b, coeff, initGuess, sz);
 		precondition( z, invDiag, resid, sz);
 		double rho = dot( resid, z, sz);
 

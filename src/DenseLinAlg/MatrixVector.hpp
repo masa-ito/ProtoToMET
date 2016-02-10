@@ -72,6 +72,16 @@ namespace DenseLinAlg {
 
 	class Matrix;
 
+	void diagPrecondConGrad_plainC( Vector & ansVec,
+			const Matrix & coeffMat, const Vector & rhsVec,
+			const Vector & initGuessVec,
+			double convergenceCriterion);
+	void diagPrecondConGrad_nonMetaOpenMP( Vector & ansVec,
+			const Matrix & coeffMat, const Vector & rhsVec,
+			const Vector & initGuessVec,
+			double convergenceCriterion);
+
+
 	class Vector {
 	private:
 		const int sz;
