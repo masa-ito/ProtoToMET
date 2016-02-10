@@ -70,10 +70,12 @@ namespace DenseLinAlg {
 		}
 	};
 
+	class Matrix;
+
 	class Vector {
-		private:
-			const int sz;
-			double* data;
+	private:
+		const int sz;
+		double* data;
 
 	public:
 		template <typename Sig> struct result;
@@ -181,6 +183,16 @@ namespace DenseLinAlg {
 				data[i] -= trans( VecExprGrammar()( expr(i) ) );
 			return *this;
 		}
+
+		friend void diagPrecondConGrad_plainC( Vector & ansVec,
+				const Matrix & coeffMat, const Vector & rhsVec,
+				const Vector & initGuessVec,
+				double convergenceCriterion);
+		friend void diagPrecondConGrad_nonMetaOpenMP( Vector & ansVec,
+				const Matrix & coeffMat, const Vector & rhsVec,
+				const Vector & initGuessVec,
+				double convergenceCriterion);
+
 	};
 
 
@@ -267,8 +279,6 @@ namespace DenseLinAlg {
 		}
 	};
 
-
-	class Matrix;
 
 	template < typename Derived >
 	struct LazyMatrixMaker
@@ -381,6 +391,15 @@ namespace DenseLinAlg {
 					m[ri][ci] -= trans( MatExprGrammar()( expr(ri, ci) ) );
 			return *this;
 		}
+
+		friend void diagPrecondConGrad_plainC( Vector & ansVec,
+				const Matrix & coeffMat, const Vector & rhsVec,
+				const Vector & initGuessVec,
+				double convergenceCriterion);
+		friend void diagPrecondConGrad_nonMetaOpenMP( Vector & ansVec,
+				const Matrix & coeffMat, const Vector & rhsVec,
+				const Vector & initGuessVec,
+				double convergenceCriterion);
 	};
 
 
