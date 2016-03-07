@@ -1,6 +1,7 @@
-
-all: diagPrecondConGrad_plainC.o \
+TARGET=diagPrecondConGrad_plainC.o \
 	diagPrecondConGrad_nonMetaOpenMP.o
+
+all: ${TARGET}
 
 
 INCDIR = -I..
@@ -12,3 +13,5 @@ diagPrecondConGrad_plainC.o : diagPrecondConGrad_plainC.cpp
 diagPrecondConGrad_nonMetaOpenMP.o : diagPrecondConGrad_nonMetaOpenMP.cpp
 	${CXX} ${CPP11STD} ${INCDIR} -fopenmp -c $<
 
+clean:
+	rm ${TARGET} 
