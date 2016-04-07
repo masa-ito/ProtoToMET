@@ -11,6 +11,8 @@
 #include <iostream>
 #include <boost/proto/proto.hpp>
 
+#include <ParallelizationTypeTag/ParallelizationTypeTag.hpp>
+
 #include <DenseLinAlg/Grammar.hpp>
 #include <DenseLinAlg/MatrixVector.hpp>
 #include <DenseLinAlg/LazyEvaluator.hpp>
@@ -23,19 +25,24 @@ namespace DenseLinAlg {
 
 	// Define a trait for detecting linear algebraic terminals, to be used
 	// by the BOOST_PROTO_DEFINE_OPERATORS macro below.
-	template<typename> struct IsExpr  : mpl::false_ {};
+	template< typename > struct IsExpr  : mpl::false_ {};
 
-	template<> struct IsExpr< Vector > : mpl::true_  {};
-	template<> struct IsExpr< Matrix > : mpl::true_  {};
-	template<> struct IsExpr< DiagonalMatrix > : mpl::true_  {};
+	template<typename MultithreadingType >
+	struct IsExpr< Vector< MultithreadingType > > : mpl::true_  {};
 
-	template<> struct IsExpr< LazyMatVecMult > : mpl::true_  {};
+	template< typename MultithreadingType >
+	struct IsExpr< Matrix< MultithreadingType > > : mpl::true_  {};
 
-	template<> struct IsExpr< LazyMatDiagmatMatMult > : mpl::true_  {};
+	template< typename MultithreadingType >
+	struct IsExpr< DiagonalMatrix< MultithreadingType > > : mpl::true_  {};
 
-	// template<> struct IsExpr< LazyVectorMaker > : mpl::true_  {};
-	// template<> struct IsExpr< LazyMatrixMaker > : mpl::true_  {};
-	// template<> struct IsExpr< LazyDiagonalMatrixMaker > : mpl::true_  {};
+	template< typename MultithreadingType >
+	struct IsExpr< LazyMatVecMult< MultithreadingType > > : mpl::true_  {};
+
+	template< typename MultithreadingType >
+	struct IsExpr< LazyMatDiagmatMatMult< MultithreadingType > > : mpl::true_
+	{};
+
 
 	// This defines all the overloads to make expressions involving
 	// Vector and Matrix objects to build Proto's expression templates.
@@ -45,8 +52,8 @@ namespace DenseLinAlg {
 	template <typename SyntaxRule>
 	struct ExpressionSyntaxChecker
 	{
-		template <class Expr>
-		void operator ()(Expr const & expr) const {
+		template < class Expr >
+		void operator ()( Expr const & expr) const {
 			static_assert(
 					proto::matches<Expr, SyntaxRule>::value,
 					"The expression does not match to the syntax rule!"

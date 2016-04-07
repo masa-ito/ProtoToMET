@@ -13,6 +13,8 @@
 #include <iostream>
 #include <boost/proto/proto.hpp>
 
+#include <ParallelizationTypeTag/ParallelizationTypeTag.hpp>
+
 #include <DenseLinAlg/Grammar.hpp>
 // #include <SparseLinAlg/IterSolver.hpp>
 
@@ -22,38 +24,43 @@ namespace proto = boost::proto;
 
 namespace DenseLinAlg {
 
+	namespace PAR = ParallelizationTypeTag;
+
 
 	// A wrapper for a linear algebraic expression
-	template<typename E> struct ExprWrapper;
+	template< typename ExprType >
+	struct ExprWrapper;
 
 	// The above grammar is associated with this domain.
 	struct Domain
-		: proto::domain<proto::generator<ExprWrapper>, ExprGrammar>
+		: proto::domain<
+		  	  proto::generator< ExprWrapper >,
+			  ExprGrammarAllParTypes
+		>
 	{};
 
 	// A wrapper template for linear algebraic expressions
 	// including matrices and vectors
-	template<typename ExprType>
+	template< typename ExprType >
 	struct ExprWrapper
-		: proto::extends<ExprType, ExprWrapper<ExprType>, Domain>
+		: proto::extends< ExprType, ExprWrapper< ExprType >, Domain >
 	{
 		/* typedef double result_type; */
 
 		// const int rowSz, colSz;
 
 		explicit ExprWrapper(const ExprType& e)
-			: proto::extends<ExprType, ExprWrapper<ExprType>, Domain>(e) /*,
-			  rowSz( e.rowSize()), colSz( e.columnSize()) */
+			: proto::extends< ExprType, ExprWrapper< ExprType >, Domain >(e)
+			  /*, rowSz( e.rowSize()), colSz( e.columnSize()) */
 		{}
 
 		// int rowSize() const { return rowSz; }
 		// int columnSize() const { return colSz; }
 	};
 
+	template < typename MultithreadingType > class Vector;
 
-	class Vector;
-
-	template < typename Derived >
+	template < typename Derived  >
 	struct LazyVectorMaker
 	{
 		const int sz;
@@ -65,23 +72,22 @@ namespace DenseLinAlg {
 		int columnSize() const { return sz; }
 		int size() const { return sz; }
 
-		void assignDataTo(Vector& lhs) const {
+		template < typename MultithreadingType >
+		void assignDataTo( Vector< MultithreadingType >& lhs) const {
 			static_cast< const Derived & >( *this).assignDataTo_derived( lhs);
 		}
 	};
 
-	class Matrix;
+	template < typename MultithreadingType > class Matrix;
 
-	void diagPrecondConGrad_plainC( Vector & ansVec,
-			const Matrix & coeffMat, const Vector & rhsVec,
-			const Vector & initGuessVec,
-			double convergenceCriterion);
-	void diagPrecondConGrad_nonMetaOpenMP( Vector & ansVec,
-			const Matrix & coeffMat, const Vector & rhsVec,
-			const Vector & initGuessVec,
+	template < typename MultithreadingType >
+	void diagPrecondConGrad( Vector< MultithreadingType > & ansVec,
+			const Matrix< MultithreadingType > & coeffMat,
+			const Vector< MultithreadingType > & rhsVec,
+			const Vector< MultithreadingType > & initGuessVec,
 			double convergenceCriterion);
 
-
+	template < typename MultithreadingType >
 	class Vector {
 	private:
 		const int sz;
@@ -105,7 +111,7 @@ namespace DenseLinAlg {
 			// std::cout << "Created" << std::endl;
 		}
 
-		Vector(const Vector& vec) :
+		Vector(const Vector< MultithreadingType >& vec) :
 			sz( vec.sz), data( new double[sz] ) {
 			for (int i = 0; i < sz; i++) data[i] = vec.data[i];
 			// std::cout << "Copied! " << std::endl;
@@ -136,7 +142,7 @@ namespace DenseLinAlg {
 		int rowSize() const { return 1; }
 		int columnSize() const { return sz; }
 
-		double dot( const Vector& vec) const
+		double dot( const Vector< MultithreadingType >& vec) const
 		{
 			double d = data[0] * vec.data[0];
 			for (int i = 1; i < sz; i++) d += data[i] * vec.data[i];
@@ -155,15 +161,18 @@ namespace DenseLinAlg {
 
 		// assigning the lhs of a vector expression into this vector
 		template < typename Expr >
-		Vector& operator=( const ExprWrapper< Expr >& expr ) {
+		Vector< MultithreadingType >&
+		operator=( const ExprWrapper< Expr >& expr ) {
 			proto::_default<> trans;
 			for(int i=0; i < sz; ++i)
-				data[i] = trans( VecExprGrammar()( expr(i) ) );
+				data[i] = trans(
+					VecExprGrammar< MultithreadingType >()( expr(i) ) );
 			return *this;
 		}
 
 		template < typename Derived >
-		Vector& operator=( const LazyVectorMaker< Derived > & maker) {
+		Vector< MultithreadingType >&
+		operator=( const LazyVectorMaker< Derived > & maker) {
 			maker.assignDataTo( *this);
 			return *this;
 		}
@@ -177,36 +186,36 @@ namespace DenseLinAlg {
 
 		// assigning and adding the lhs of a vector expression into this vector
 		template<typename Expr>
-		Vector& operator+=( const Expr& expr ) {
+		Vector< MultithreadingType >& operator+=( const Expr& expr ) {
 			proto::_default<> trans;
 			for(int i=0; i < sz; ++i)
-				data[i] += trans( VecExprGrammar()( expr(i) ) );
+				data[i] += trans(
+					VecExprGrammar< MultithreadingType >()( expr(i) ) );
 			return *this;
 		}
 
 		// assigning and subtracting the lhs of a vector expression into
 		// this vector
 		template<typename Expr>
-		Vector& operator-=( const Expr& expr ) {
+		Vector< MultithreadingType >& operator-=( const Expr& expr ) {
 			proto::_default<> trans;
 			for(int i=0; i < sz; ++i)
-				data[i] -= trans( VecExprGrammar()( expr(i) ) );
+				data[i] -= trans(
+						VecExprGrammar< MultithreadingType >()( expr(i) ) );
 			return *this;
 		}
 
-		friend void diagPrecondConGrad_plainC( Vector & ansVec,
-				const Matrix & coeffMat, const Vector & rhsVec,
-				const Vector & initGuessVec,
-				double convergenceCriterion);
-		friend void diagPrecondConGrad_nonMetaOpenMP( Vector & ansVec,
-				const Matrix & coeffMat, const Vector & rhsVec,
-				const Vector & initGuessVec,
+		friend void diagPrecondConGrad<>(
+				Vector< MultithreadingType > & ansVec,
+				const Matrix< MultithreadingType > & coeffMat,
+				const Vector< MultithreadingType > & rhsVec,
+				const Vector< MultithreadingType > & initGuessVec,
 				double convergenceCriterion);
 
 	};
 
 
-	class DiagonalMatrix;
+	template < typename MultithreadingType > class DiagonalMatrix;
 
 	template < typename Derived >
 	struct LazyDiagonalMatrixMaker
@@ -220,12 +229,14 @@ namespace DenseLinAlg {
 		int columnSize() const { return sz; }
 		int size() const { return sz; }
 
-		void assignDataTo(DiagonalMatrix& lhs) const {
+		template < typename MultithreadingType >
+		void assignDataTo(DiagonalMatrix< MultithreadingType >& lhs) const {
 			static_cast< const Derived & >( *this).assignDataTo_derived( lhs);
 		}
 	};
 
 
+	template < typename MultithreadingType >
 	class DiagonalMatrix
 	{
 	private:
@@ -241,7 +252,11 @@ namespace DenseLinAlg {
 		template <typename This, typename T>
 		struct result< This(T) > { typedef double type; };
 
-		explicit DiagonalMatrix(int sz_ = 1, double iniVal = 0.0) :
+		explicit DiagonalMatrix(int sz_ = 1) :
+				sz( sz_), data( new double[sz] )
+		{}
+
+		explicit DiagonalMatrix(int sz_, double iniVal) :
 				sz( sz_), data( new double[sz] )
 		{
 			for (int i = 0; i < sz; i++) data[i] = iniVal;
@@ -274,15 +289,17 @@ namespace DenseLinAlg {
 		}
 
 		template< typename Expr >
-		DiagonalMatrix& operator=( const ExprWrapper< Expr >& expr ) {
+		DiagonalMatrix< MultithreadingType >&
+		operator=( const ExprWrapper< Expr >& expr ) {
 			proto::_default<> trans;
 			for(int i=0; i < sz; ++i)
-				data[i] = trans( DiagMatExprGrammar()( expr(i) ) );
+				data[i] = trans(
+					DiagMatExprGrammar< MultithreadingType >()( expr(i) ) );
 			return *this;
 		}
 
 		template < typename Derived >
-		DiagonalMatrix&
+		DiagonalMatrix< MultithreadingType >&
 		operator=( const LazyDiagonalMatrixMaker< Derived >& maker ) {
 			maker.assignDataTo( *this);
 			return *this;
@@ -302,12 +319,14 @@ namespace DenseLinAlg {
 		int rowSize() const { return rowSz; }
 		int columnSize() const { return colSz; }
 
-		void assignDataTo(Matrix& lhs) const {
+		template < typename MultithreadingType >
+		void assignDataTo(Matrix< MultithreadingType >& lhs) const {
 			static_cast< const Derived & >( *this).assignDataTo_derived( lhs);
 		}
 	};
 
 
+	template < typename MultithreadingType >
 	class Matrix
 	{
 	private:
@@ -321,8 +340,15 @@ namespace DenseLinAlg {
 		template <typename This, typename T>
 		struct result< This(T,T) > { typedef double type; };
 
-		explicit Matrix(int rowSize = 1, int columnSize =1,
-					double iniVal = 0.0) :
+		explicit Matrix(int rowSize = 1, int columnSize =1) :
+			rowSz( rowSize), colSz(columnSize),
+			data( new double[rowSz*colSz] ), m( new double*[rowSz])
+		{
+			for (int i = 0; i < rowSz; i++) m[i] = data + i*colSz;
+		}
+
+		explicit Matrix(int rowSize, int columnSize,
+					double iniVal) :
 			rowSz( rowSize), colSz(columnSize),
 			data( new double[rowSz*colSz] ), m( new double*[rowSz])
 		{
@@ -332,7 +358,8 @@ namespace DenseLinAlg {
 			std::cout << "Created" << std::endl;
 		}
 
-		Matrix( const Matrix& mat) :
+
+		Matrix( const Matrix< MultithreadingType >& mat) :
 			rowSz( mat.rowSz), colSz( mat.colSz),
 			data( new double[rowSz*colSz] ), m( new double*[rowSz])
 		{
@@ -367,49 +394,56 @@ namespace DenseLinAlg {
 
 		// assigning the lhs of a vector expression into this matrix
 		template<typename Expr>
-		Matrix& operator=( const ExprWrapper< Expr >& expr ) {
+		Matrix< MultithreadingType >&
+		operator=( const ExprWrapper< Expr >& expr ) {
 			proto::_default<> trans;
 			for(int ri=0; ri < rowSz; ri++)
 				for (int ci=0; ci < colSz; ci++ )
-					m[ri][ci] = trans( MatExprGrammar()( expr(ri, ci) ) );
+					m[ri][ci] = trans(
+						MatExprGrammar< MultithreadingType >()( expr(ri, ci) )
+						);
 			return *this;
 		}
 
 		template < typename Derived >
-		Matrix& operator=( const LazyMatrixMaker< Derived >& maker) {
+		Matrix< MultithreadingType >&
+		operator=( const LazyMatrixMaker< Derived >& maker) {
 			maker.assignDataTo( *this);
 			return *this;
 		}
 
 		// assigning and adding the lhs of a vector expression into this matrix
 		template<typename Expr>
-		Matrix& operator+=( const Expr& expr ) {
+		Matrix< MultithreadingType >& operator+=( const Expr& expr ) {
 			proto::_default<> trans;
 			for(int ri=0; ri < rowSz; ri++)
 				for (int ci=0; ci < colSz; ci++ )
-					m[ri][ci] += trans( MatExprGrammar()( expr(ri, ci) ) );
+					m[ri][ci] += trans(
+						MatExprGrammar< MultithreadingType >()( expr(ri, ci) )
+						);
 			return *this;
 		}
 
 		// assigning and subtracting the lhs of a vector expression into
 		// this matrix
 		template<typename Expr>
-		Matrix& operator-=( const Expr& expr ) {
+		Matrix< MultithreadingType >& operator-=( const Expr& expr ) {
 			proto::_default<> trans;
 			for(int ri=0; ri < rowSz; ri++)
 				for (int ci=0; ci < colSz; ci++ )
-					m[ri][ci] -= trans( MatExprGrammar()( expr(ri, ci) ) );
+					m[ri][ci] -= trans(
+						MatExprGrammar< MultithreadingType >()( expr(ri, ci) )
+					);
 			return *this;
 		}
 
-		friend void diagPrecondConGrad_plainC( Vector & ansVec,
-				const Matrix & coeffMat, const Vector & rhsVec,
-				const Vector & initGuessVec,
+		friend void diagPrecondConGrad<>(
+				Vector< MultithreadingType > & ansVec,
+				const Matrix< MultithreadingType > & coeffMat,
+				const Vector< MultithreadingType > & rhsVec,
+				const Vector< MultithreadingType > & initGuessVec,
 				double convergenceCriterion);
-		friend void diagPrecondConGrad_nonMetaOpenMP( Vector & ansVec,
-				const Matrix & coeffMat, const Vector & rhsVec,
-				const Vector & initGuessVec,
-				double convergenceCriterion);
+
 	};
 
 

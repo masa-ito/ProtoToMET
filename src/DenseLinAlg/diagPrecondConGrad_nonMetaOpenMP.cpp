@@ -9,10 +9,14 @@
 
 #include <iostream>
 
+#include <ParallelizationTypeTag/ParallelizationTypeTag.hpp>
+
 #include <DenseLinAlg/DenseLinAlg.hpp>
 // #include <SparseLinAlg/SparseLinAlg.hpp>
 
-namespace DLA = DenseLinAlg;
+// #include <DenseLinAlg/diagPrecondConGrad.hpp>
+
+// namespace DLA = DenseLinAlg;
 // namespace SLA = SparseLinAlg;
 
 // invDiag = inverse matrix of ( diagonal part of coeff )
@@ -98,10 +102,16 @@ double vecAbs( double * const b , int sz)
 
 namespace DenseLinAlg {
 
-	void diagPrecondConGrad_nonMetaOpenMP( DLA::Vector & ansVec,
-			const DLA::Matrix & coeffMat, const DLA::Vector & rhsVec,
-			const DLA::Vector & initGuessVec,
-			double convergenceCriterion)
+	namespace PAR = ParallelizationTypeTag;
+
+	template <>
+	void diagPrecondConGrad(
+		Vector< PAR::OpenMP > & ansVec,
+		const Matrix< PAR::OpenMP> & coeffMat,
+		const Vector< PAR::OpenMP > & rhsVec,
+		const Vector< PAR::OpenMP > & initGuessVec,
+		double convergenceCriterion
+	)
 	{
 		double* ans = ansVec.data;
 		double** const coeff = coeffMat.m;

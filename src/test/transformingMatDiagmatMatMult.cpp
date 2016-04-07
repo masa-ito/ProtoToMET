@@ -8,6 +8,7 @@
 #include <iostream>
 #include <boost/proto/proto.hpp>
 
+#include <ParallelizationTypeTag/ParallelizationTypeTag.hpp>
 #include <DenseLinAlg/DenseLinAlg.hpp>
 
 namespace mpl = boost::mpl;
@@ -21,12 +22,19 @@ namespace proto = boost::proto;
 namespace mpl = boost::mpl;
 namespace proto = boost::proto;
 
+namespace PAR = ParallelizationTypeTag;
 namespace DLA = DenseLinAlg;
+
+typedef PAR::SingleThread MultiThreadingType;
+
+typedef DLA::Vector< MultiThreadingType > Vector;
+typedef DLA::DiagonalMatrix< MultiThreadingType > DiagonalMatrix;
+
 
 int main()
 {
-	DLA::Matrix pre(3,3), post(3,3), result(3,3);
-	DLA::DiagonalMatrix diag(3);
+	Matrix pre(3,3), post(3,3), result(3,3);
+	DiagonalMatrix diag(3);
 
 	pre(0,0) = 1.1; pre(0,1) = 1.2; pre(0,2) = 1.3;
 	pre(1,0) = 2.1; pre(1,1) = 2.2; pre(1,2) = 2.3;

@@ -8,21 +8,30 @@
 #include <iostream>
 #include <boost/proto/proto.hpp>
 
+#include <ParallelizationTypeTag/ParallelizationTypeTag.hpp>
 #include <DenseLinAlg/DenseLinAlg.hpp>
 
 namespace mpl = boost::mpl;
 namespace proto = boost::proto;
 
+namespace PAR = ParallelizationTypeTag;
+namespace DLA = DenseLinAlg;
+
+typedef PAR::SingleThread MultiThreadingType;
+
+typedef DLA::Matrix< MultiThreadingType > Matrix;
+typedef DLA::Vector< MultiThreadingType > Vector;
+typedef DLA::VecExprGrammar< MultiThreadingType > VecExprGrammar;
+typedef DLA::ExprGrammar< MultiThreadingType > ExprGrammar;
 
 void testVecAdd()
 {
-	using namespace DenseLinAlg;
 
     // lazy_vectors with 3 elements each.
     Vector v1( 3, 1.0 ), v2( 3, 2.0 ), v3( 3, 3.0 );
 
-	GrammarChecker< ExprGrammar >
-		checker = GrammarChecker< ExprGrammar >();
+	DLA::GrammarChecker< ExprGrammar >
+		checker = DLA::GrammarChecker< ExprGrammar >();
 
     // Add two vectors lazily and get the 2nd element.
     std::cout << "Checking if v2 + v3 matches to ExprGrammar ..."
@@ -40,6 +49,7 @@ void testVecAdd()
     proto::_default<> trans;
 
     // Look ma, no temporaries!
+    /*
     double d1 = trans( ExprGrammar()( ( v2 + v3 )( 2 ) ) );
     std::cout << "( v2 + v3 )( 2 ) = " << d1 << std::endl;
 
@@ -50,13 +60,13 @@ void testVecAdd()
     std::cout << '{' << v1(0) << ',' << v1(1)
               << ',' << v1(2) << ',' << v1(3) << '}' << std::endl;
 
+	*/
     return;
 }
 
 void testMatAdd()
 {
-	using namespace DenseLinAlg;
-
+	/*
 	Matrix m1( 3, 3), m2( 3, 3), m3( 3, 3);
 	for (int ri=0; ri < 3; ri++)
 		for (int ci=0; ci < 3; ci++)
@@ -65,8 +75,8 @@ void testMatAdd()
 			m2(ri, ci) = 2.0 + 0.1 * ri + 0.01 * ci;
 		}
 
-	GrammarChecker< ExprGrammar >
-		checker = GrammarChecker< ExprGrammar >();
+	DLA::GrammarChecker< ExprGrammar >
+		checker = DLA::GrammarChecker< ExprGrammar >();
 
 	std::cout << "Checking if m1 + m2 matches to ExprGrammar ..."
 			<< std::endl;
@@ -90,14 +100,13 @@ void testMatAdd()
 			m3(1,2) << " ) " << std::endl;
 	std::cout << "  ( " << m3(2,0) << "  " << m3(2,1) << " " <<
 			m3(2,2) << " ) )" << std::endl;
-
+	*/
 	return;
 }
 
 void testMatVecMul()
 {
-	using namespace DenseLinAlg;
-
+	/*
     Matrix mat( 3, 3);
     Vector vec1(3), vec2(3);
 
@@ -109,26 +118,26 @@ void testMatVecMul()
     vec1(1) = 2.0;
     vec1(2) = 3.0;
 
-	GrammarChecker< ExprGrammar >
+	DLA::GrammarChecker< ExprGrammar >
 		checker = GrammarChecker< ExprGrammar >();
 
     std::cout << "Checking if mat * vec1 matches to ExprGrammar ..."
         	<< std::endl;
 	checker( mat * vec1 );
 
-    /* std::cout << "Checking if MatVecMultGrammar()( mat * vec1) "
+    std::cout << "Checking if MatVecMultGrammar()( mat * vec1) "
     		<< "matches to ExprGrammar ..."
         	<< std::endl;
-	checker( MatVecMultGrammar()( mat * vec1) ); */
+	checker( MatVecMultGrammar()( mat * vec1) );
 
     std::cout << "Checking if ( mat * vec1)(2) matches to ExprGrammar ..."
         	<< std::endl;
 	checker( ( mat * vec1)(2) );
 
-    /* std::cout << "Checking if VecExprGrammar()( ( mat * vec1)(2) ) "
+    std::cout << "Checking if VecExprGrammar()( ( mat * vec1)(2) ) "
     		<< "matches to ExprGrammar ..."
         	<< std::endl;
-	checker( VecExprGrammar()( ( mat * vec1)(2) ) ); */
+	checker( VecExprGrammar()( ( mat * vec1)(2) ) );
 
     proto::_default<> trans;
     double elm2 = trans( VecExprGrammar()( ( mat * vec1)(2) ) );
@@ -143,6 +152,7 @@ void testMatVecMul()
     		vec2(2) << ")" << std::endl;
     // This should be ( 6.08 , 6.68 , 7.28) .
 
+	*/
 	return;
 }
 

@@ -8,15 +8,21 @@
 #include <iostream>
 #include <boost/proto/proto.hpp>
 
+#include <ParallelizationTypeTag/ParallelizationTypeTag.hpp>
 #include <DenseLinAlg/DenseLinAlg.hpp>
 
 namespace mpl = boost::mpl;
 namespace proto = boost::proto;
 
+typedef PAR::SingleThread MultiThreadingType;
+
+typedef DLA::Matrix< MultiThreadingType > Matrix;
+typedef DLA::Vector< MultiThreadingType > Vector;
+typedef DLA::VecExprGrammar< MultiThreadingType > VecExprGrammar;
+typedef DLA::ExprGrammar< MultiThreadingType > ExprGrammar;
 
 int main()
 {
-	using namespace DenseLinAlg;
 
     Matrix matA( 3, 3);
     Vector vecX(3), vecB(3), vecR(3);
@@ -33,7 +39,7 @@ int main()
     vecB(1) = 5.0;
     vecB(2) = 6.0;
 
-	GrammarChecker< ExprGrammar >
+	DLA::GrammarChecker< ExprGrammar >
 		checker = GrammarChecker< ExprGrammar >();
 
     std::cout << "Checking if (vecB - matA * vecX) matches to ExprGrammar ..."

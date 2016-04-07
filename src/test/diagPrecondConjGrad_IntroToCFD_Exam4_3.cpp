@@ -17,18 +17,24 @@
 #include <iostream>
 #include <boost/proto/proto.hpp>
 
+#include <ParallelizationTypeTag/ParallelizationTypeTag.hpp>
 #include <DenseLinAlg/DenseLinAlg.hpp>
 #include <SparseLinAlg/SparseLinAlg.hpp>
 
+namespace PAR = ParallelizationTypeTag;
 namespace DLA = DenseLinAlg;
 namespace SLA = SparseLinAlg;
 
+typedef PAR::SingleThread MultiThreadingType;
+
+typedef DLA::Matrix< MultiThreadingType > Matrix;
+typedef DLA::Vector< MultiThreadingType > Vector;
 
 int main()
 {
 	const int NumCtrlVol = 5;
 
-	DLA::Matrix coeffMat( NumCtrlVol, NumCtrlVol, 0.0);
+	Matrix coeffMat( NumCtrlVol, NumCtrlVol, 0.0);
 
 	coeffMat(0,0) =  20.0; coeffMat(0,1) =  -5.0;
 	coeffMat(1,0) =  -5.0; coeffMat(1,1) =  15.0; coeffMat(1,2) =  -5.0;
@@ -36,15 +42,15 @@ int main()
 	coeffMat(3,2) =  -5.0; coeffMat(3,3) =  15.0; coeffMat(3,4) =  -5.0;
 	                       coeffMat(4,3) =  -5.0; coeffMat(4,4) =  10.0;
 
-	DLA::Vector rhsVec( NumCtrlVol);
+	Vector rhsVec( NumCtrlVol);
 	rhsVec(0) = 1100.0; rhsVec(1) = 100.0; rhsVec(2) = 100.0;
 	rhsVec(3) = 100.0; rhsVec(4) = 100.0;
 
 	SLA::DiagonalPreconditioner precond( coeffMat);
-	SLA::ConjugateGradient< DLA::Matrix, SLA::DiagonalPreconditioner >
+	SLA::ConjugateGradient< Matrix, SLA::DiagonalPreconditioner >
 	                   							cg( coeffMat, precond);
 
-	const DLA::Vector tempGuess( NumCtrlVol, (100.0 + 20.0) / 2.0);
+	const Vector tempGuess( NumCtrlVol, (100.0 + 20.0) / 2.0);
 	const double convergenceCriterion = 1.0e-7;
 
 //	struct BaseA {};
@@ -57,7 +63,7 @@ int main()
 //	A a;
 //	Hoge hoge = a;
 
-	DLA::Vector temperature( NumCtrlVol);
+	Vector temperature( NumCtrlVol);
 	temperature = cg.solve(rhsVec, tempGuess, convergenceCriterion);
 
 	std::cout << temperature(0) << std::endl;

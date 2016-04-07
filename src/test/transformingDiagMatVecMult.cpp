@@ -16,19 +16,26 @@ namespace proto = boost::proto;
 #include <iostream>
 #include <boost/proto/proto.hpp>
 
+#include <ParallelizationTypeTag/ParallelizationTypeTag.hpp>
 #include <DenseLinAlg/DenseLinAlg.hpp>
 
 namespace mpl = boost::mpl;
 namespace proto = boost::proto;
 
+namespace PAR = ParallelizationTypeTag;
 namespace DLA = DenseLinAlg;
+
+typedef PAR::SingleThread MultiThreadingType;
+
+typedef DLA::Vector< MultiThreadingType > Vector;
+typedef DLA::DiagonalMatrix< MultiThreadingType > DiagonalMatrix;
 
 int main()
 {
-	DLA::Vector vec(3), result(3);
+	Vector vec(3), result(3);
 	vec(0) = 1.1; vec(1) = 2.2; vec(2) = 3.3;
 
-	DLA::DiagonalMatrix diag(3);
+	DiagonalMatrix diag(3);
 	diag(0) = 1.0; diag(1) = 2.0; diag(2) = 3.0;
 
 	result = diag * vec;

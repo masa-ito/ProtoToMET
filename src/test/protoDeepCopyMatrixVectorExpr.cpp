@@ -8,17 +8,26 @@
 #include <iostream>
 #include <boost/proto/proto.hpp>
 
+#include <ParallelizationTypeTag/ParallelizationTypeTag.hpp>
 #include <DenseLinAlg/DenseLinAlg.hpp>
 
 namespace mpl = boost::mpl;
 namespace proto = boost::proto;
 
+namespace PAR = ParallelizationTypeTag;
 namespace DLA = DenseLinAlg;
+
+typedef PAR::SingleThread MultiThreadingType;
+
+typedef DLA::Matrix< MultiThreadingType > Matrix;
+typedef DLA::Vector< MultiThreadingType > Vector;
+typedef DLA::VecExprGrammar< MultiThreadingType > VecExprGrammar;
+typedef DLA::ExprGrammar< MultiThreadingType > ExprGrammar;
 
 int main()
 {
-    DLA::Matrix matA( 3, 3);
-    DLA::Vector vecX(3), vecB(3), vecR(3);
+    Matrix matA( 3, 3);
+    Vector vecX(3), vecB(3), vecR(3);
 
     matA(0,0) = 1.00; matA(0,1) = 1.01; matA(0,2) = 1.02;
     matA(1,0) = 1.10; matA(1,1) = 1.11; matA(1,2) = 1.12;
@@ -32,8 +41,8 @@ int main()
     vecB(1) = 5.0;
     vecB(2) = 6.0;
 
-	DLA::GrammarChecker< DLA::ExprGrammar >
-		checker = DLA::GrammarChecker< DLA::ExprGrammar >();
+	DLA::GrammarChecker< ExprGrammar >
+		checker = DLA::GrammarChecker< ExprGrammar >();
 
 	auto expr = proto::deep_copy( vecB - matA * vecX );
 
@@ -47,7 +56,7 @@ int main()
 	checker( expr(2) );
 
     proto::_default<> trans;
-    double elm2 = trans( DLA::VecExprGrammar()( expr(2) ) );
+    double elm2 = trans( VecExprGrammar()( expr(2) ) );
 
     std::cout << "( vecB - matA * vecX)(2) = " << elm2 << std::endl;
     // This should be  -1.28 .

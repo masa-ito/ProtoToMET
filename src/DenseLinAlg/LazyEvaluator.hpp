@@ -29,19 +29,20 @@ namespace DenseLinAlg {
 	// An expression like ( matrix * vector )(index) is transformed
 	// into the loop for calculating the dot product between
 	// the index'th row of the matrix and the vector.
+	template < typename MultithreadingType >
 	struct LazyMatVecMult
 	{
-		Matrix const& m;
-		Vector const& v;
+		Matrix< MultithreadingType > const& m;
+		Vector< MultithreadingType > const& v;
 		const int mColSz;
 
 		typedef double result_type;
-		// typedef mpl::int_<1> proto_arity;
 
-		explicit LazyMatVecMult(Matrix const& mat, Vector const& vec) :
+		explicit LazyMatVecMult(Matrix< MultithreadingType > const& mat,
+								Vector< MultithreadingType > const& vec) :
 			m( mat), v( vec), mColSz(mat.rowSize()) {}
 
-		LazyMatVecMult( LazyMatVecMult const& lazy) :
+		LazyMatVecMult( LazyMatVecMult< MultithreadingType > const& lazy) :
 			m(lazy.m), v(lazy.v), mColSz(lazy.mColSz) {}
 
 		result_type operator()(int index) const
@@ -56,14 +57,20 @@ namespace DenseLinAlg {
 	// Callable transform object to make the lazy functor
 	// a proto exression for lazily evaluationg the multiplication
 	// of a matrix and a vector .
+	template < typename MultithreadingType >
 	struct MatVecMult : proto::callable
 	{
-		typedef proto::terminal< LazyMatVecMult >::type result_type;
+		typedef
+			typename
+				proto::terminal< LazyMatVecMult< MultithreadingType > >::type
+			result_type;
 
 		result_type
-		operator()( Matrix const& mat, Vector const& vec) const
+		operator()( Matrix< MultithreadingType > const& mat,
+					Vector< MultithreadingType > const& vec) const
 		{
-			return proto::as_expr( LazyMatVecMult(mat, vec) );
+			return proto::as_expr(
+					LazyMatVecMult< MultithreadingType >(mat, vec) );
 		}
 	};
 
@@ -71,21 +78,25 @@ namespace DenseLinAlg {
 	// Lazy function object for evaluating an element of
 	// the resultant vector from the multiplication of
 	// a matrix and a diagonal matrix and a matrix
+	template < typename MultithreadingType >
 	struct LazyMatDiagmatMatMult
 	{
-		Matrix const & pre;
-		DiagonalMatrix const & diag;
-		Matrix const & post;
+		Matrix< MultithreadingType > const & pre;
+		DiagonalMatrix< MultithreadingType > const & diag;
+		Matrix< MultithreadingType > const & post;
 		const int sz;
 
 		typedef double result_type;
 
-		explicit LazyMatDiagmatMatMult(Matrix const & pre_,
-			DiagonalMatrix const & diag_, Matrix const & post_) :
+		explicit LazyMatDiagmatMatMult(
+				Matrix< MultithreadingType > const & pre_,
+				DiagonalMatrix< MultithreadingType > const & diag_,
+				Matrix< MultithreadingType > const & post_) :
 			pre( pre_), diag( diag_), post( post_), sz( diag_.size())
 		{}
 
-		LazyMatDiagmatMatMult( LazyMatDiagmatMatMult const & lazy) :
+		LazyMatDiagmatMatMult(
+			LazyMatDiagmatMatMult< MultithreadingType > const & lazy) :
 			pre( lazy.pre), diag( lazy.diag), post( lazy.post), sz( lazy.sz)
 		{}
 
@@ -102,15 +113,24 @@ namespace DenseLinAlg {
 	// Callable transform object to make the lazy functor
 	// a proto exression for lazily evaluationg the multiplication
 	// of a matrix and a diagonal matrix and a matrix
+	template < typename MultithreadingType >
 	struct MatDiagmatMatMult : proto::callable
 	{
-		typedef proto::terminal< LazyMatDiagmatMatMult >::type result_type;
+		typedef
+		typename
+		proto::terminal< LazyMatDiagmatMatMult< MultithreadingType > >::type
+		result_type;
 
 		result_type
-		operator()( Matrix const& pre, DiagonalMatrix const & diag,
-				Matrix const& post) const
+		operator()( Matrix< MultithreadingType > const& pre,
+					DiagonalMatrix< MultithreadingType > const & diag,
+					Matrix< MultithreadingType > const& post) const
 		{
-			return proto::as_expr( LazyMatDiagmatMatMult(pre, diag, post) );
+			return
+				proto::as_expr(
+					LazyMatDiagmatMatMult< MultithreadingType >(pre,
+																diag, post)
+				);
 		}
 
 

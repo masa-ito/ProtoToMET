@@ -1,19 +1,19 @@
 /*
- * ParlTypeTag.hpp
+ * ParallelizationTypeTag.hpp
  *
  *  Created on: 2016/03/23
  *      Author: Masakatsu ITO
  */
 
-#ifndef PARLTYPETAG_PARLTYPETAG_HPP_
-#define PARLTYPETAG_PARLTYPETAG_HPP_
+#ifndef PARALLELIZATIONTYPETAG_PARALLELIZATIONTYPETAG_HPP_
+#define PARALLELIZATIONTYPETAG_PARALLELIZATIONTYPETAG_HPP_
 
 //
 // Parallelization Type Tag
 //
-namespace ParlTypeTag {
+namespace ParallelizationTypeTag {
 
-	// Multithreading type
+	// Multithreading types
 	struct OpenMP {};
 	struct SingleThread {};
 
@@ -26,11 +26,11 @@ namespace ParlTypeTag {
 	struct Altivec {};
 	?? */
 
-	// Multiprocessing type
+	// Multiprocessing types
 	struct MPI {};
 	struct SingleProcess {};
 
 }
 
 
-#endif /* PARLTYPETAG_PARLTYPETAG_HPP_ */
+#endif /* PARALLELIZATIONTYPETAG_PARALLELIZATIONTYPETAG_HPP_ */

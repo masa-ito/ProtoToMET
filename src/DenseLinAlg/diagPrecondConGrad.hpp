@@ -1,107 +1,67 @@
 /*
- * diagPrecondConGrad_plainC.cpp
+ * diagPrecondConGrad.hpp
  *
- *  Created on: 2016/02/08
+ *  Created on: 2016/03/23
  *      Author: Masakatsu ITO
  */
+
+#ifndef DENSELINALG_DIAGPRECONDCONGRAD_HPP_
+#define DENSELINALG_DIAGPRECONDCONGRAD_HPP_
 
 #include <math.h>
 
 #include <iostream>
 
-#include <ParallelizationTypeTag/ParallelizationTypeTag.hpp>
-
-// #include <DenseLinAlg/DenseLinAlg.hpp>
+#include <DenseLinAlg/DenseLinAlg.hpp>
 // #include <SparseLinAlg/SparseLinAlg.hpp>
-
-#include <DenseLinAlg/diagPrecondConGrad.hpp>
 
 // namespace DLA = DenseLinAlg;
 // namespace SLA = SparseLinAlg;
 
 // invDiag = inverse matrix of ( diagonal part of coeff )
-void makePreconditioner(double * invDiag, double** const coeff, int sz)
-{
-	for (int i = 0; i < sz ; i++) invDiag[i] = 1.0 / coeff[i][i];
-}
+void makePreconditioner(double * invDiag, double** const coeff, int sz);
+
 
 // resid = b - coeff * x
 void vecMinusMatMultVec(double* resid,
-		double * const b, double** const coeff, double * const x, int sz)
-{
-	for (int ri = 0; ri < sz; ri++) {
-		double p = coeff[ri][0] * x[0];
-		for (int ci = 1; ci  < sz; ci++) p += coeff[ri][ci] * x[ci];
-		resid[ri] = b[ri] - p;
-	}
-}
+		double * const b, double** const coeff, double * const x, int sz);
 
 // z = invDiag * resid
 void precondition( double* z,
-		double * const invDiag, double * const resid, int sz)
-{
-	for (int ri = 0; ri < sz; ri++) z[ri] = invDiag[ri] * resid[ri];
-}
+		double * const invDiag, double * const resid, int sz);
 
 // p = z
-void vectorCopy( double* p, double * const z, int sz)
-{
-	for (int ri = 0; ri < sz; ri++) p[ri] = z[ri];
-}
+void vectorCopy( double* p, double * const z, int sz);
 
 // q = coeff * p
 void matMultVec( double* q,
-		double** const coeff, double * const p, int sz)
-{
-	for (int ri = 0; ri < sz; ri++) {
-		q[ri] = coeff[ri][0] * p[0];
-		for (int ci = 1; ci < sz; ci++) q[ri] += coeff[ri][ci] * p[ci];
-	}
-}
+		double** const coeff, double * const p, int sz);
 
 // dot product of p and q
-double dot( double * const p, double * const q, int sz)
-{
-	double d = p[0] * q[0];
-	for (int ri = 1; ri < sz; ri++) d += p[ri]*q[ri];
-	return d;
-}
+double dot( double * const p, double * const q, int sz);
 
 // ans = initGuess + alpha * p
 void vecPlusScalarMultVec( double * ans,
-		double * const initGuess, double alpha, double * const p, int sz)
-{
-	for (int ri = 0; ri < sz; ri++) ans[ri] = initGuess[ri] +  alpha * p[ri];
-}
+		double * const initGuess, double alpha, double * const p, int sz);
+
 
 // ans += alpha * p
 void assignAndPlusScalarMultVec( double* ans,
-		double alpha, double * const p, int sz)
-{
-	for (int ri = 0; ri < sz; ri++) ans[ri] += alpha * p[ri];
-}
+		double alpha, double * const p, int sz);
 
 
 // absolute value of a vector b
-double vecAbs( double * const b , int sz)
-{
-	double bSqr = b[0] * b[0];
-	for (int ri = 1; ri < sz; ri++) bSqr += b[ri] * b[ri];
-	return sqrt( bSqr);
-}
+double vecAbs( double * const b , int sz);
+
 
 namespace DenseLinAlg {
 
-	namespace PAR = ParallelizationTypeTag;
-
-	template <>
-	void diagPrecondConGrad(
-			Vector< PAR::SingleThread  > & ansVec,
-			const Matrix< PAR::SingleThread > & coeffMat,
-			const Vector< PAR::SingleThread  > & rhsVec,
-			const Vector< PAR::SingleThread  > & initGuessVec,
-			double convergenceCriterion
-	)
+	template < typename MultithreadingType >
+	void diagPrecondConGrad( Vector< MultithreadingType > & ansVec,
+				const Matrix< MultithreadingType > & coeffMat,
+				const Vector< MultithreadingType > & rhsVec,
+				const Vector< MultithreadingType > & initGuessVec,
+				double convergenceCriterion)
 	{
 		double* ans = ansVec.data;
 		double** const coeff = coeffMat.m;
@@ -154,4 +114,8 @@ namespace DenseLinAlg {
 
 		return;
 	}
+
 }
+
+
+#endif /* DENSELINALG_DIAGPRECONDCONGRAD_HPP_ */
