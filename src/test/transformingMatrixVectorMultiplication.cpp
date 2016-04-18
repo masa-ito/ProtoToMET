@@ -33,14 +33,15 @@ void testVecAdd()
     		<< std::endl;
     checker( ( v2 + v3 )( 2 ) );
 
-    std::cout << "Checking if VecExprOpt()( ( v2 + v3 )( 2 ) )";
-    std::cout << " matches to VecExprOpt rule ..." << std::endl;
-    checker( ExprGrammar()( ( v2 + v3 )( 2 ) ) );
+    // std::cout << "Checking if VecExprOpt()( ( v2 + v3 )( 2 ) )";
+    // std::cout << " matches to VecExprOpt rule ..." << std::endl;
+    // checker( ExprGrammar()( ( v2 + v3 )( 2 ) ) );
 
-    proto::_default<> trans;
+    // proto::_default<> trans;
 
     // Look ma, no temporaries!
-    double d1 = trans( ExprGrammar()( ( v2 + v3 )( 2 ) ) );
+    double d1 = ExprGrammar()( ( v2 + v3 )( 2 ) );
+    // double d1 = trans( ExprGrammar()( ( v2 + v3 )( 2 ) ) );
     std::cout << "( v2 + v3 )( 2 ) = " << d1 << std::endl;
 
     // Subtract two vectors and add the result to a third vector.
@@ -76,8 +77,9 @@ void testMatAdd()
 			<< std::endl;
 	checker( (m1 + m2)(0,1) );
 
-    proto::_default<> trans;
-	double elm01 = trans( ExprGrammar()( (m1 + m2)(0,1) ) );
+    // proto::_default<> trans;
+	double elm01 = ExprGrammar()( (m1 + m2)(0,1) );
+	// double elm01 = trans( ExprGrammar()( (m1 + m2)(0,1) ) );
 	std::cout << " (m1 + m2)(0,1) = " << elm01 << std::endl;
 
 	m3 = m1 + m2;
@@ -130,8 +132,9 @@ void testMatVecMul()
         	<< std::endl;
 	checker( VecExprGrammar()( ( mat * vec1)(2) ) ); */
 
-    proto::_default<> trans;
-    double elm2 = trans( VecExprGrammar()( ( mat * vec1)(2) ) );
+    // proto::_default<> trans;
+    double elm2 = VecExprGrammar()( ( mat * vec1)(2) );
+    // double elm2 = trans( VecExprGrammar()( ( mat * vec1)(2) ) );
 
     std::cout << "( mat * vec1)(2) = " << elm2 << std::endl;
     // This should be 7.28 .
@@ -148,7 +151,7 @@ void testMatVecMul()
 
 int main()
 {
-    std::cout << "Let's see if any temporary oject is copied !" << std::endl;
+    // std::cout << "Let's see if any temporary oject is copied !" << std::endl;
 
 	testVecAdd();
 	testMatAdd();

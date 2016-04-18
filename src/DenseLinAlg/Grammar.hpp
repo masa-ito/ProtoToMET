@@ -23,7 +23,7 @@ namespace DenseLinAlg {
 
 
 	// Callable transform object to make a proto exression
-	// for lazily evaluationg a. multiplication
+	// for lazily evaluating multiplication
 	struct MatVecMult;
 
 	// The grammar for the multiplication of a matrix and a vector
@@ -82,8 +82,10 @@ namespace DenseLinAlg {
 	// The grammar for a vector expression
 	struct VecExprGrammar : proto::or_<
 		// VecElmGrammar( index )
-		proto::when< proto::function< VecElmGrammar, proto::_ >,
-					VecElmGrammar(proto::_left, proto::_right) >,
+		proto::when<
+			proto::function< VecElmGrammar, proto::_ >,
+			proto::_default< >( VecElmGrammar(proto::_left, proto::_right) )
+		>,
 		// Vector
 		proto::terminal< Vector >,
 		// VecExprGrammar +(-) VecExprGrammar
@@ -107,9 +109,11 @@ namespace DenseLinAlg {
 	// The transformation rule for matrix element expressions
 	struct MatElmGrammar : proto::or_<
 		// Matrix
-		proto::when< proto::terminal< Matrix >,
-					proto::_make_function( proto::_,
-										proto::_state, proto::_data) >,
+		proto::when<
+			proto::terminal< Matrix >,
+			proto::_make_function( proto::_,
+										proto::_state, proto::_data)
+		>,
 
 		// Matrix * DiagonalMatrix * Matrix
 		proto::when<
@@ -163,13 +167,17 @@ namespace DenseLinAlg {
 		// DiagMatElmTwoIdxGrammar( rowIndex, columnIndex )
 		proto::when<
 			proto::function< DiagMatElmTwoIdxGrammar, proto::_, proto::_ >,
-			DiagMatElmTwoIdxGrammar( proto::_child0,
+			proto::_default< >(
+					DiagMatElmTwoIdxGrammar( proto::_child0,
 									proto::_child1, proto::_child2)
+			)
 		>,
 		// DiagMatElmOneIdxGrammar( index )
 		proto::when<
 			proto::function< DiagMatElmOneIdxGrammar, proto::_ >,
-			DiagMatElmTwoIdxGrammar( proto::_child0, proto::_child1)
+			proto::_default< >(
+					DiagMatElmTwoIdxGrammar( proto::_child0, proto::_child1)
+			)
 		>,
 		// DiagonalMatrix
 		proto::terminal< DiagonalMatrix >,
@@ -183,7 +191,10 @@ namespace DenseLinAlg {
 		// MatElmGrammar( rowIndex, columnIndex )
 		proto::when<
 				proto::function< MatElmGrammar, proto::_ , proto::_ >,
-				MatElmGrammar(proto::_child0, proto::_child1, proto::_child2)
+				proto::_default< >(
+						MatElmGrammar(proto::_child0,
+								proto::_child1, proto::_child2)
+				)
 			>,
 		// Matrix
 		proto::terminal< Matrix >,

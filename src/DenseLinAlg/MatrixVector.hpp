@@ -125,7 +125,7 @@ namespace DenseLinAlg {
 
 		~Vector() {
 			delete [] data;
-			std::cout << "Deleted" << std::endl;
+			// std::cout << "Deleted" << std::endl;
 		}
 
 		int size() const { return sz; }
@@ -152,9 +152,10 @@ namespace DenseLinAlg {
 		// assigning the lhs of a vector expression into this vector
 		template < typename Expr >
 		Vector& operator=( const ExprWrapper< Expr >& expr ) {
-			proto::_default<> trans;
+			// proto::_default<> trans;
 			for(int i=0; i < sz; ++i)
-				data[i] = trans( VecExprGrammar()( expr(i) ) );
+				data[i] = VecExprGrammar()( expr(i) );
+				// data[i] = trans( VecExprGrammar()( expr(i) ) );
 			return *this;
 		}
 
@@ -174,9 +175,10 @@ namespace DenseLinAlg {
 		// assigning and adding the lhs of a vector expression into this vector
 		template<typename Expr>
 		Vector& operator+=( const Expr& expr ) {
-			proto::_default<> trans;
+			// proto::_default<> trans;
 			for(int i=0; i < sz; ++i)
-				data[i] += trans( VecExprGrammar()( expr(i) ) );
+				data[i] += VecExprGrammar()( expr(i) );
+				// data[i] += trans( VecExprGrammar()( expr(i) ) );
 			return *this;
 		}
 
@@ -184,9 +186,10 @@ namespace DenseLinAlg {
 		// this vector
 		template<typename Expr>
 		Vector& operator-=( const Expr& expr ) {
-			proto::_default<> trans;
+			// proto::_default<> trans;
 			for(int i=0; i < sz; ++i)
-				data[i] -= trans( VecExprGrammar()( expr(i) ) );
+				data[i] -= VecExprGrammar()( expr(i) );
+				// data[i] -= trans( VecExprGrammar()( expr(i) ) );
 			return *this;
 		}
 
@@ -267,9 +270,10 @@ namespace DenseLinAlg {
 
 		template< typename Expr >
 		DiagonalMatrix& operator=( const ExprWrapper< Expr >& expr ) {
-			proto::_default<> trans;
+			// proto::_default<> trans;
 			for(int i=0; i < sz; ++i)
-				data[i] = trans( DiagMatExprGrammar()( expr(i) ) );
+				data[i] = DiagMatExprGrammar()( expr(i) );
+				// data[i] = trans( DiagMatExprGrammar()( expr(i) ) );
 			return *this;
 		}
 
@@ -321,7 +325,7 @@ namespace DenseLinAlg {
 			for (int i = 0; i < rowSz; i++) m[i] = data + i*colSz;
 			for (int ri = 0; ri < rowSz; ri++)
 				for (int ci = 0; ci < colSz; ci++) m[ri][ci] = iniVal;
-			std::cout << "Created" << std::endl;
+			// std::cout << "Created" << std::endl;
 		}
 
 		Matrix( const Matrix& mat) :
@@ -332,7 +336,7 @@ namespace DenseLinAlg {
 				for (int ri = 0; ri < rowSz; ri++)
 					for (int ci = 0; ci < colSz; ci++)
 						m[ri][ci] = mat.m[ri][ci];
-				std::cout << "Copied! " << std::endl;
+				// std::cout << "Copied! " << std::endl;
 		}
 
 //		Matrix( const LazyMatrixMaker & maker); // :
@@ -347,7 +351,7 @@ namespace DenseLinAlg {
 		{
 			delete [] m;
 			delete [] data;
-			std::cout << "Deleted" << std::endl;
+			// std::cout << "Deleted" << std::endl;
 		}
 
 		int rowSize() const { return rowSz; }
@@ -360,10 +364,11 @@ namespace DenseLinAlg {
 		// assigning the lhs of a vector expression into this matrix
 		template<typename Expr>
 		Matrix& operator=( const ExprWrapper< Expr >& expr ) {
-			proto::_default<> trans;
+			// proto::_default<> trans;
 			for(int ri=0; ri < rowSz; ri++)
 				for (int ci=0; ci < colSz; ci++ )
-					m[ri][ci] = trans( MatExprGrammar()( expr(ri, ci) ) );
+					m[ri][ci] = MatExprGrammar()( expr(ri, ci) );
+					// m[ri][ci] = trans( MatExprGrammar()( expr(ri, ci) ) );
 			return *this;
 		}
 
@@ -376,10 +381,11 @@ namespace DenseLinAlg {
 		// assigning and adding the lhs of a vector expression into this matrix
 		template<typename Expr>
 		Matrix& operator+=( const Expr& expr ) {
-			proto::_default<> trans;
+			// proto::_default<> trans;
 			for(int ri=0; ri < rowSz; ri++)
 				for (int ci=0; ci < colSz; ci++ )
-					m[ri][ci] += trans( MatExprGrammar()( expr(ri, ci) ) );
+					m[ri][ci] += MatExprGrammar()( expr(ri, ci) );
+					// m[ri][ci] += trans( MatExprGrammar()( expr(ri, ci) ) );
 			return *this;
 		}
 
@@ -387,10 +393,11 @@ namespace DenseLinAlg {
 		// this matrix
 		template<typename Expr>
 		Matrix& operator-=( const Expr& expr ) {
-			proto::_default<> trans;
+			// proto::_default<> trans;
 			for(int ri=0; ri < rowSz; ri++)
 				for (int ci=0; ci < colSz; ci++ )
-					m[ri][ci] -= trans( MatExprGrammar()( expr(ri, ci) ) );
+					m[ri][ci] -= MatExprGrammar()( expr(ri, ci) );
+					// m[ri][ci] -= trans( MatExprGrammar()( expr(ri, ci) ) );
 			return *this;
 		}
 
