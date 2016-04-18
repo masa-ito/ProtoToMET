@@ -46,8 +46,9 @@ int main()
         	<< std::endl;
 	checker( expr(2) );
 
-    proto::_default<> trans;
-    double elm2 = trans( DLA::VecExprGrammar()( expr(2) ) );
+    // proto::_default<> trans;
+    double elm2 = DLA::VecExprGrammar()( expr(2) );
+    // double elm2 = trans( DLA::VecExprGrammar()( expr(2) ) );
 
     std::cout << "( vecB - matA * vecX)(2) = " << elm2 << std::endl;
     // This should be  -1.28 .
