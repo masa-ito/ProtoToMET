@@ -46,11 +46,11 @@ inline void vectorCopy( double* p, double * const z, int sz)
 inline void matMultVec( double* q,
 		double** const coeff, double * const p, int sz)
 {
-#pragma omp parallel for
+	#pragma omp parallel for
 	for (int ri = 0; ri < sz; ri++)	q[ri] = coeff[ri][0] * p[0];
 
-#pragma omp parallel for
 	for (int ri = 0; ri < sz; ri++)
+		#pragma omp parallel for
 		for (int ci = 1; ci < sz; ci++)	q[ri] += coeff[ri][ci] * p[ci];
 }
 
