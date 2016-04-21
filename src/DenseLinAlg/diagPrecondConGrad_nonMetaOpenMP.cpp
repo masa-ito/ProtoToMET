@@ -46,12 +46,17 @@ inline void vectorCopy( double* p, double * const z, int sz)
 inline void matMultVec( double* q,
 		double** const coeff, double * const p, int sz)
 {
-	#pragma omp parallel for
-	for (int ri = 0; ri < sz; ri++)	q[ri] = coeff[ri][0] * p[0];
+	// #pragma omp parallel for
+	// for (int ri = 0; ri < sz; ri++)	q[ri] = coeff[ri][0] * p[0];
 
-	for (int ri = 0; ri < sz; ri++)
-		#pragma omp parallel for
-		for (int ci = 1; ci < sz; ci++)	q[ri] += coeff[ri][ci] * p[ci];
+	for (int ri = 0; ri < sz; ri++) {
+		double qri = coeff[ri][0] * p[0];
+
+		#pragma omp parallel for reduction (+:qri)
+		for (int ci = 1; ci < sz; ci++)	qri += coeff[ri][ci] * p[ci];
+
+		q[ri] = qri;
+	}
 }
 
 // dot product of p and q
