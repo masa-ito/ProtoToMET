@@ -1,4 +1,8 @@
 
+HEADERS = ParallelizationTypeTag/ParallelizationTypeTag.hpp \
+ParallelizationTypeTag/Default.hpp \
+ParallelizationTypeTag/OpenMP.hpp 
+
 EXECUTABLES_FOLLOWING_SUFFIX_RULE= \
 helloWorld lazyVector \
 protofyingIntArray3 protofyingStdVector \
@@ -14,7 +18,9 @@ transformingMatrixAndVector \
 adaptingMyMatrixAndVectorClassesToProto 
 
 TARGET= ${EXECUTABLES_FOLLOWING_SUFFIX_RULE} \
-vecAdd
+vecAdd \
+vecAddSingleThread \
+vecAddMetaOpenMP
 
 all: ${TARGET}
 
@@ -28,6 +34,13 @@ CPP11STD = -std=c++11
 
 vecAdd : vecAdd.cpp vecAdd.hpp
 	${CXX} ${CPP11STD} $< -o $@
+	
+vecAddSingleThread : vecAddSingleThread.cpp vecAddMetaOpenMP.hpp ${HEADERS}
+	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
+
+vecAddMetaOpenMP : vecAddMetaOpenMP.cpp vecAddMetaOpenMP.hpp ${HEADERS}
+	${CXX} ${CPP11STD} ${INCDIR} -fopenmp $< -o $@
+
 
 #helloWorld : helloWorld.cpp
 #	${CXX} $< -o $@
