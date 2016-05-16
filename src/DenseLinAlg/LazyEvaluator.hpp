@@ -14,13 +14,18 @@
 #include <iostream>
 #include <boost/proto/proto.hpp>
 
-#include <DenseLinAlg/MatrixVector.hpp>
+#include <ParallelizationTypeTag/Default.hpp>
 
-namespace mpl = boost::mpl;
-namespace proto = boost::proto;
+#include <DenseLinAlg/MatrixVector.hpp>
 
 
 namespace DenseLinAlg {
+
+	namespace mpl = boost::mpl;
+	namespace proto = boost::proto;
+
+	namespace PTT = ParallelizationTypeTag;
+
 
 	// Lazy function object for evaluating an element of
 	// the resultant vector from the multiplication of
@@ -53,6 +58,32 @@ namespace DenseLinAlg {
 		}
 	};
 
+	// For OpenMP
+	struct LazyMatVecMultOmp
+	{
+		Matrix const& m;
+		Vector const& v;
+		const int mColSz;
+
+		typedef double result_type;
+
+		explicit LazyMatVecMultOmp(Matrix const& mat, Vector const& vec) :
+			m( mat), v( vec), mColSz(mat.rowSize()) {}
+
+		LazyMatVecMultOmp( LazyMatVecMultOmp const& lazy) :
+			m(lazy.m), v(lazy.v), mColSz(lazy.mColSz) {}
+
+		result_type operator()(int index) const
+		{
+			result_type elm = 0.0;
+
+			#pragma omp parallel for reduction (+:elm)
+			for (int ci =0;  ci < mColSz; ci++)
+				elm += m(index, ci) * v(ci);
+			return elm;
+		}
+	};
+
 	// Callable transform object to make the lazy functor
 	// a proto exression for lazily evaluationg the multiplication
 	// of a matrix and a vector .
@@ -64,6 +95,18 @@ namespace DenseLinAlg {
 		operator()( Matrix const& mat, Vector const& vec) const
 		{
 			return proto::as_expr( LazyMatVecMult(mat, vec) );
+		}
+	};
+
+	// For OpenMP
+	struct MatVecMultOmp : proto::callable
+	{
+		typedef proto::terminal< LazyMatVecMultOmp >::type result_type;
+
+		result_type
+		operator()( Matrix const& mat, Vector const& vec) const
+		{
+			return proto::as_expr( LazyMatVecMultOmp(mat, vec) );
 		}
 	};
 

@@ -15,11 +15,12 @@
 #include <DenseLinAlg/MatrixVector.hpp>
 #include <DenseLinAlg/LazyEvaluator.hpp>
 
-namespace mpl = boost::mpl;
-namespace proto = boost::proto;
-
 
 namespace DenseLinAlg {
+
+	namespace mpl = boost::mpl;
+	namespace proto = boost::proto;
+
 
 	// Define a trait for detecting linear algebraic terminals, to be used
 	// by the BOOST_PROTO_DEFINE_OPERATORS macro below.

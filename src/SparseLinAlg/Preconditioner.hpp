@@ -10,9 +10,10 @@
 
 #include <DenseLinAlg/DenseLinAlg.hpp>
 
-namespace DLA = DenseLinAlg;
 
 namespace SparseLinAlg {
+
+	namespace DLA = DenseLinAlg;
 
 	class AbstPreconditioner;
 
