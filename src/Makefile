@@ -20,7 +20,9 @@ adaptingMyMatrixAndVectorClassesToProto
 TARGET= ${EXECUTABLES_FOLLOWING_SUFFIX_RULE} \
 vecAdd \
 vecAddSingleThread \
-vecAddMetaOpenMP
+vecAddMetaOpenMP \
+matVecMultAndVecSubSingleThread \
+matVecMultAndVecSubMetaOpenMP 
 
 all: ${TARGET}
 
@@ -41,6 +43,14 @@ vecAddSingleThread : vecAddSingleThread.cpp vecAddMetaOpenMP.hpp ${HEADERS}
 vecAddMetaOpenMP : vecAddMetaOpenMP.cpp vecAddMetaOpenMP.hpp ${HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} -fopenmp $< -o $@
 
+matVecMultAndVecSubSingleThread : matVecMultAndVecSubSingleThread.cpp \
+ matVecMultAndVecSubMetaOpenMP.hpp ${HEADERS}
+	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
+
+matVecMultAndVecSubMetaOpenMP : matVecMultAndVecSubMetaOpenMP.cpp \
+ matVecMultAndVecSubMetaOpenMP.hpp ${HEADERS}
+	${CXX} ${CPP11STD} ${INCDIR} -fopenmp $< -o $@
+ 
 
 #helloWorld : helloWorld.cpp
 #	${CXX} $< -o $@
