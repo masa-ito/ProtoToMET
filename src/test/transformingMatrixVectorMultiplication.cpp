@@ -25,9 +25,9 @@ void testVecAdd()
 		checker = GrammarChecker< ExprGrammar >();
 
     // Add two vectors lazily and get the 2nd element.
-    std::cout << "Checking if v2 + v3 matches to ExprGrammar ..."
+    std::cout << "Checking if v2 + v3 matches to VecElementwiseGrammar ..."
     		<< std::endl;
-    checker( v2 + v3 );
+    GrammarChecker< VecElementwiseGrammar >()( v2 + v3 );
 
     std::cout << "Checking if (v2 + v3)(2) matches to ExprGrammar ..."
     		<< std::endl;
