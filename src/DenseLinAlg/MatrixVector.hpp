@@ -278,7 +278,7 @@ namespace DenseLinAlg {
 		// this vector
 		template < typename Expr >
 		Vector& operator-=( const Expr& expr ) {
-			plusAssign( expr, PTT::Specified() );
+			minusAssign( expr, PTT::Specified() );
 			return *this;
 		}
 

@@ -6,7 +6,9 @@ all:	transformingMatrixVectorMultiplication \
 	transformingMatDiagmatMatMult \
 	protoDeepCopyMatrixVectorExpr \
 	diagPrecondConjGrad_IntroToCFD_Exam4_3 \
-	diagPrecondConjGrad_IntroToCFD_Exam4_3_metaOpenMP 
+	diagPrecondConjGrad_IntroToCFD_Exam4_3_metaOpenMP \
+	diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration \
+	diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration_metaOpenMP
 
 HEADERS= ../DenseLinAlg/DenseLinAlg.hpp \
  ../DenseLinAlg/Grammar.hpp \
@@ -48,9 +50,20 @@ protoDeepCopyMatrixVectorExpr : protoDeepCopyMatrixVectorExpr.cpp \
 diagPrecondConjGrad_IntroToCFD_Exam4_3 : \
  diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp \
  ${HEADERS}
-	${CXX} ${CPP11STD} ${INCDIR} -g $< -o $@
+	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 diagPrecondConjGrad_IntroToCFD_Exam4_3_metaOpenMP : \
  diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp \
  ${HEADERS}
-	${CXX} ${CPP11STD} ${INCDIR} -fopenmp $< -o $@
+	${CXX} ${CPP11STD} ${INCDIR} -fopenmp $< -o $@	
+
+diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration : \
+ diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration.cpp \
+ ${HEADERS}
+	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
+
+diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration_metaOpenMP : \
+ diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration.cpp \
+ ${HEADERS}
+	${CXX} ${CPP11STD} ${INCDIR} -fopenmp  $< -o $@
+
