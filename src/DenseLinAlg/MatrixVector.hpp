@@ -142,13 +142,6 @@ namespace DenseLinAlg {
 		const double& operator()(int i) const { return data[i]; }
 
 
-		template < typename Derived >
-		Vector& operator=( const LazyVectorMaker< Derived > & maker) {
-			maker.assignDataTo( *this);
-			return *this;
-		}
-
-
 		// Assignment in single thread
 		template < typename Expr >
 		void assign( const Expr& expr ,
@@ -187,16 +180,20 @@ namespace DenseLinAlg {
 		// assigning the lhs of a vector expression into this vector
 		template < typename Expr >
 		Vector& operator=( const ExprWrapper< Expr >& expr ) {
+			// NOTE that this argument type should be ExprWrapper< >,
+			// otherwise the following operator=() cannot be
+			// instanciated for SparseLinAlg::LazyIterSolver
+			// which is the derived class of LazyVectorMaker< > .
+
 			assign( expr, PTT::Specified() );
 			return *this;
 		}
 
-
-		// Vector& operator=( const SparseLinAlg::LazyIterSolver & maker) {
-		//	maker.assignDataTo( *this);
-		//	return *this;
-		// }
-
+		template < typename Derived >
+		Vector& operator=( const LazyVectorMaker< Derived > & maker) {
+			maker.assignDataTo( *this);
+			return *this;
+		}
 
 		// Plus & Assignment in single thread
 		template < typename Expr >
