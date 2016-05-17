@@ -24,13 +24,11 @@ transformingMatrixVectorMultiplication :  \
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 transformingMatVecMultAndVecSub : transformingMatVecMultAndVecSub.cpp \
- transformingMatVecMultAndVecSub.hpp \
  ${HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 transformingMatVecMultAndVecSub_metaOpenMP : \
  transformingMatVecMultAndVecSub.cpp \
- transformingMatVecMultAndVecSub.hpp \
  ${HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} -fopenmp $< -o $@
 
