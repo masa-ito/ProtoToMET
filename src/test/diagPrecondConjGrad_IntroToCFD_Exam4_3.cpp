@@ -12,6 +12,10 @@
  *      Author: Masakatsu ITO
  */
 
+#ifdef _OPENMP
+#include <ParallelizationTypeTag/OpenMP.hpp>
+#endif
+
 #include <math.h>
 
 #include <iostream>
@@ -46,19 +50,10 @@ int main()
 
 	const DLA::Vector tempGuess( NumCtrlVol, (100.0 + 20.0) / 2.0);
 	const double convergenceCriterion = 1.0e-7;
-
-//	struct BaseA {};
-//	struct A : BaseA {};
-//	class Hoge {
-//	public:
-//		Hoge( const BaseA & a) {}
-//	};
-//
-//	A a;
-//	Hoge hoge = a;
+	const int maxIter = 100;
 
 	DLA::Vector temperature( NumCtrlVol);
-	temperature = cg.solve(rhsVec, tempGuess, convergenceCriterion);
+	temperature = cg.solve(rhsVec, tempGuess, convergenceCriterion, maxIter);
 
 	std::cout << temperature(0) << std::endl;
 	std::cout << temperature(1) << std::endl;

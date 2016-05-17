@@ -24,12 +24,14 @@ namespace SparseLinAlg {
 
 		LazyIterSolver
 		solve( const DLA::Vector & b, const DLA::Vector & iniGuess,
-				const double convgergenceCriterion = 1.0e-5) const;
+			   const double convgergenceCriterion = 1.0e-5,
+			   const int maxIter = 1000) const;
 
 		virtual void solveAndAssign(const DLA::Vector & b,
 								const DLA::Vector & iniGuess,
 								DLA::Vector & lhs,
-								double convgergenceCriterion) const = 0;
+								double convgergenceCriterion,
+								int maxIter) const = 0;
 	};
 
 	struct LazyIterSolver : public DLA::LazyVectorMaker< LazyIterSolver >
@@ -37,28 +39,31 @@ namespace SparseLinAlg {
 		const AbstIterSolver & solver;
 		const DLA::Vector & b, iniGuess;
 		const double criterion;
+		const int maxIter;
 
 		explicit
 		LazyIterSolver( const AbstIterSolver & solver_,
 						const DLA::Vector & b_, const DLA::Vector & iniGuess_,
-						double convgergenceCriterion = 1.0e-5) :
+						double convgergenceCriterion = 1.0e-5,
+						const int maxIter_ = 1000) :
 			DLA::LazyVectorMaker< LazyIterSolver >( b_.size() ),
 			solver(solver_), b( b_), iniGuess( iniGuess_),
-			criterion(convgergenceCriterion) {}
+			criterion(convgergenceCriterion), maxIter( maxIter_) {}
 
 		void assignDataTo_derived(DLA::Vector & lhs) const
 		{
-			solver.solveAndAssign(b, iniGuess, lhs, criterion);
+			solver.solveAndAssign(b, iniGuess, lhs, criterion, maxIter);
 		}
 	};
 
 	LazyIterSolver
 	AbstIterSolver::solve( const DLA::Vector & b,
 			const DLA::Vector & iniGuess,
-			double convgergenceCriterion) const
+			double convgergenceCriterion,
+			const int maxIter) const
 	{
 		return  LazyIterSolver( *this,
-						b, iniGuess, convgergenceCriterion);
+						b, iniGuess, convgergenceCriterion, maxIter);
 	}
 
 
@@ -77,7 +82,8 @@ namespace SparseLinAlg {
 		virtual void solveAndAssign( const DLA::Vector & b,
 								const DLA::Vector & iniGuess,
 								DLA::Vector & lhs,
-								const double convgergenceCriterion) const
+								const double convgergenceCriterion,
+								const int maxIter) const
 		{
 			DLA::Vector resid( b.columnSize()), z( b.columnSize()),
 					q( b.columnSize());
@@ -94,7 +100,10 @@ namespace SparseLinAlg {
 			resid -= alpha * q;
 
 			const double bAbs = b.abs();
-			while ( resid.abs() / bAbs >  convgergenceCriterion)
+			for (int iter = 0;
+					iter < maxIter &&
+					resid.abs() / bAbs >  convgergenceCriterion ;
+					iter++ )
 			{
 				z = precond.solve( resid);
 				double prevRho = rho;
