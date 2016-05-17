@@ -87,9 +87,67 @@ namespace DenseLinAlg {
 		const int sz;
 		double* data;
 
+		double _dot( const Vector& vec,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&)
+		const
+		{
+			double d = data[0] * vec.data[0];
+			for (int i = 1; i < sz; i++) d += data[i] * vec.data[i];
+			return d;
+		}
+
+		double _dot( const Vector& vec,
+				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >&)
+		const
+		{
+			double d = data[0] * vec.data[0];
+			#pragma omp parallel for reduction (+:d)
+			for (int i = 1; i < sz; i++) d += data[i] * vec.data[i];
+
+			std::cout << "OpenMP dot product" << std::endl;
+
+			return d;
+		}
+
+		double _abs(
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&)
+		const {
+			double aSqr = data[0] * data[0];
+			for (int i = 1; i < sz; i++) aSqr += data[i] * data[i];
+			return sqrt( aSqr);
+		}
+
+		double _abs(
+				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >&)
+		const {
+			double aSqr = data[0] * data[0];
+			#pragma omp parallel for reduction (+:aSqr)
+			for (int i = 1; i < sz; i++) aSqr += data[i] * data[i];
+
+			std::cout << "OpenMP vector abs" << std::endl;
+
+			return sqrt( aSqr);
+		}
+
+		//
+		// For implementing operator=()
+		//
+		void assign( const Vector& rhs,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&) {
+			for(int i=0; i < sz; ++i) data[i] = rhs.data[i];
+		}
+
+		void assign( const Vector& rhs,
+			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
+			#pragma omp parallel for
+			for(int i=0; i < sz; ++i) data[i] = rhs.data[i];
+
+			std::cout << "OpenMP vector assign" << std::endl;
+		}
+
 		// Assignment in single thread
 		template < typename Expr >
-		void assign( const Expr& expr ,
+		void assign( const ExprWrapper< Expr >& expr,
 			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
 			for(int i=0; i < sz; ++i)
 				data[i] = VecExprGrammar()( expr(i) );
@@ -100,7 +158,7 @@ namespace DenseLinAlg {
 		typename boost::enable_if<
 			proto::matches< Expr, VecElementwiseGrammar >
 		>::type
-		assign( const Expr& expr ,
+		assign( const ExprWrapper< Expr >& expr,
 				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
 			#pragma omp parallel for
 			for(int i=0; i < sz; ++i)
@@ -114,7 +172,7 @@ namespace DenseLinAlg {
 		typename boost::enable_if<
 			proto::matches< Expr,VecReductionGrammar >
 		>::type
-		assign( const Expr& expr ,
+		assign( const ExprWrapper< Expr >& expr ,
 				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
 			for(int i=0; i < sz; ++i)
 				data[i] = VecReductionOmpGrammar()( expr(i) );
@@ -122,9 +180,25 @@ namespace DenseLinAlg {
 			std::cout << "OpenMP reduction assign" << std::endl;
 		}
 
+		//
+		// For implementing operator+=()
+		//
+		void plusAssign( const Vector& rhs,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&) {
+			for(int i=0; i < sz; ++i) data[i] += rhs.data[i];
+		}
+
+		void plusAssign( const Vector& rhs,
+			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
+			#pragma omp parallel for
+			for(int i=0; i < sz; ++i) data[i] += rhs.data[i];
+
+			std::cout << "OpenMP vector assign" << std::endl;
+		}
+
 		// Plus & Assignment in single thread
 		template < typename Expr >
-		void plusAssign( const Expr& expr ,
+		void plusAssign( const ExprWrapper< Expr >& expr ,
 			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
 			for(int i=0; i < sz; ++i)
 				data[i] += VecExprGrammar()( expr(i) );
@@ -135,7 +209,7 @@ namespace DenseLinAlg {
 		typename boost::enable_if<
 			proto::matches< Expr, VecElementwiseGrammar >
 		>::type
-		plusAssign( const Expr& expr ,
+		plusAssign( const ExprWrapper< Expr >& expr,
 				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
 			#pragma omp parallel for
 			for(int i=0; i < sz; ++i)
@@ -149,7 +223,7 @@ namespace DenseLinAlg {
 		typename boost::enable_if<
 			proto::matches< Expr,VecReductionGrammar >
 		>::type
-		plusAssign( const Expr& expr ,
+		plusAssign( const ExprWrapper< Expr >& expr ,
 				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
 			for(int i=0; i < sz; ++i)
 				data[i] += VecReductionOmpGrammar()( expr(i) );
@@ -157,9 +231,25 @@ namespace DenseLinAlg {
 			std::cout << "OpenMP reduction plus assign" << std::endl;
 		}
 
+		//
+		// For implementing operator-=()
+		//
+		void minusAssign( const Vector& rhs,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&) {
+			for(int i=0; i < sz; ++i) data[i] -= rhs.data[i];
+		}
+
+		void minusAssign( const Vector& rhs,
+			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
+			#pragma omp parallel for
+			for(int i=0; i < sz; ++i) data[i] -= rhs.data[i];
+
+			std::cout << "OpenMP vector assign" << std::endl;
+		}
+
 		// Minus & Assignment in single thread
 		template < typename Expr >
-		void minusAssign( const Expr& expr ,
+		void minusAssign( const ExprWrapper< Expr >& expr ,
 			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
 			for(int i=0; i < sz; ++i)
 				data[i] -= VecExprGrammar()( expr(i) );
@@ -170,7 +260,7 @@ namespace DenseLinAlg {
 		typename boost::enable_if<
 			proto::matches< Expr, VecElementwiseGrammar >
 		>::type
-		minusAssign( const Expr& expr ,
+		minusAssign( const ExprWrapper< Expr >& expr ,
 				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
 			#pragma omp parallel for
 			for(int i=0; i < sz; ++i)
@@ -184,7 +274,7 @@ namespace DenseLinAlg {
 		typename boost::enable_if<
 			proto::matches< Expr,VecReductionGrammar >
 		>::type
-		minusAssign( const Expr& expr ,
+		minusAssign( const ExprWrapper< Expr >& expr,
 				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
 			for(int i=0; i < sz; ++i)
 				data[i] -= VecReductionOmpGrammar()( expr(i) );
@@ -210,7 +300,7 @@ namespace DenseLinAlg {
 
 		Vector(const Vector& vec) :
 			sz( vec.sz), data( new double[sz] ) {
-			for (int i = 0; i < sz; i++) data[i] = vec.data[i];
+			assign( vec, PTT::Specified());
 		}
 
 		template < typename Derived >
@@ -230,22 +320,22 @@ namespace DenseLinAlg {
 
 		double dot( const Vector& vec) const
 		{
-			double d = data[0] * vec.data[0];
-			for (int i = 1; i < sz; i++) d += data[i] * vec.data[i];
-			return d;
+			return _dot(vec, PTT::Specified());
 		}
 
 		double abs() const {
-			double aSqr = data[0] * data[0];
-			for (int i = 1; i < sz; i++) aSqr += data[i] * data[i];
-			return sqrt( aSqr);
+			return _abs( PTT::Specified());
 		}
-
 
 		// accessing to an element of this vector
 		double& operator()(int i) { return data[i]; }
 		const double& operator()(int i) const { return data[i]; }
 
+
+		Vector& operator=( const Vector& rhs ) {
+			assign( rhs, PTT::Specified());
+			return *this;
+		}
 
 		// assigning the lhs of a vector expression into this vector
 		template < typename Expr >
