@@ -5,49 +5,68 @@ all:	transformingMatrixVectorMultiplication \
 	transformingDiagMatVecMult \
 	transformingMatDiagmatMatMult \
 	protoDeepCopyMatrixVectorExpr \
-	diagPrecondConjGrad_IntroToCFD_Exam4_3 
+	diagPrecondConjGrad_IntroToCFD_Exam4_3 \
+	diagPrecondConjGrad_IntroToCFD_Exam4_3_metaOpenMP \
+	diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration \
+	diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration_metaOpenMP
 
-HEADERS= ../DenseLinAlg/DenseLinAlg.hpp \
+DLA_HEADERS= ../DenseLinAlg/DenseLinAlg.hpp \
  ../DenseLinAlg/Grammar.hpp \
  ../DenseLinAlg/MatrixVector.hpp \
  ../DenseLinAlg/LazyEvaluator.hpp \
  ../DenseLinAlg/diagPrecondConGrad.hpp 
 
+SLA_HEADERS= ../SparseLinAlg/SparseLinAlg.hpp \
+ ../SparseLinAlg/IterSolver.hpp \
+ ../SparseLinAlg/Preconditioner.hpp 
 
 INCDIR = -I..
 CPP11STD = -std=c++11
 
 transformingMatrixVectorMultiplication :  \
  transformingMatrixVectorMultiplication.cpp \
- ${HEADERS}
+ ${DLA_HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 transformingMatVecMultAndVecSub : transformingMatVecMultAndVecSub.cpp \
- transformingMatVecMultAndVecSub.hpp \
- ${HEADERS}
+ ${DLA_HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 transformingMatVecMultAndVecSub_metaOpenMP : \
- transformingMatVecMultAndVecSub_metaOpenMP.cpp \
- transformingMatVecMultAndVecSub.hpp \
- ${HEADERS}
+ transformingMatVecMultAndVecSub.cpp \
+ ${DLA_HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} -fopenmp $< -o $@
 
 
 transformingDiagMatVecMult : transformingDiagMatVecMult.cpp \
- ${HEADERS}
+ ${DLA_HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 transformingMatDiagmatMatMult : transformingMatDiagmatMatMult.cpp \
- ${HEADERS}
+ ${DLA_HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 protoDeepCopyMatrixVectorExpr : protoDeepCopyMatrixVectorExpr.cpp \
- ${HEADERS}
+ ${DLA_HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 diagPrecondConjGrad_IntroToCFD_Exam4_3 : \
  diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp \
- ${HEADERS}
+ ${DLA_HEADERS} ${SLA_HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
+
+diagPrecondConjGrad_IntroToCFD_Exam4_3_metaOpenMP : \
+ diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp \
+ ${DLA_HEADERS} ${SLA_HEADERS}
+	${CXX} ${CPP11STD} ${INCDIR} -fopenmp $< -o $@	
+
+diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration : \
+ diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration.cpp \
+ ${DLA_HEADERS} ${SLA_HEADERS}
+	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
+
+diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration_metaOpenMP : \
+ diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration.cpp \
+ ${DLA_HEADERS} ${SLA_HEADERS}
+	${CXX} ${CPP11STD} ${INCDIR} -fopenmp  $< -o $@
 

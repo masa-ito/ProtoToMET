@@ -27,7 +27,7 @@ namespace DenseLinAlg {
 
 
 	// A wrapper for a linear algebraic expression
-	template<typename E> struct ExprWrapper;
+	template < typename E > struct ExprWrapper;
 
 	// The above grammar is associated with this domain.
 	struct Domain
@@ -87,6 +87,201 @@ namespace DenseLinAlg {
 		const int sz;
 		double* data;
 
+		double _dot( const Vector& vec,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&)
+		const
+		{
+			double d = data[0] * vec.data[0];
+			for (int i = 1; i < sz; i++) d += data[i] * vec.data[i];
+			return d;
+		}
+
+		double _dot( const Vector& vec,
+				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >&)
+		const
+		{
+			double d = data[0] * vec.data[0];
+			#pragma omp parallel for reduction (+:d)
+			for (int i = 1; i < sz; i++) d += data[i] * vec.data[i];
+
+			std::cout << "OpenMP dot product" << std::endl;
+
+			return d;
+		}
+
+		double _abs(
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&)
+		const {
+			double aSqr = data[0] * data[0];
+			for (int i = 1; i < sz; i++) aSqr += data[i] * data[i];
+			return sqrt( aSqr);
+		}
+
+		double _abs(
+				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >&)
+		const {
+			double aSqr = data[0] * data[0];
+			#pragma omp parallel for reduction (+:aSqr)
+			for (int i = 1; i < sz; i++) aSqr += data[i] * data[i];
+
+			std::cout << "OpenMP vector abs" << std::endl;
+
+			return sqrt( aSqr);
+		}
+
+		//
+		// For implementing operator=()
+		//
+		void assign( const Vector& rhs,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&) {
+			for(int i=0; i < sz; ++i) data[i] = rhs.data[i];
+		}
+
+		void assign( const Vector& rhs,
+			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
+			#pragma omp parallel for
+			for(int i=0; i < sz; ++i) data[i] = rhs.data[i];
+
+			std::cout << "OpenMP vector assign" << std::endl;
+		}
+
+		// Assignment in single thread
+		template < typename Expr >
+		void assign( const ExprWrapper< Expr >& expr,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
+			for(int i=0; i < sz; ++i)
+				data[i] = VecExprGrammar()( expr(i) );
+		}
+
+		// Assignment of elementwise expression in OpenMP
+		template < typename Expr >
+		typename boost::enable_if<
+			proto::matches< Expr, VecElementwiseGrammar >
+		>::type
+		assign( const ExprWrapper< Expr >& expr,
+				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
+			#pragma omp parallel for
+			for(int i=0; i < sz; ++i)
+				data[i] = VecElementwiseGrammar()( expr(i) );
+
+			std::cout << "OpenMP elementwise assign" << std::endl;
+		}
+
+		// Assignment of reduction expression in OpenMP
+		template < typename Expr >
+		typename boost::enable_if<
+			proto::matches< Expr,VecReductionGrammar >
+		>::type
+		assign( const ExprWrapper< Expr >& expr ,
+				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
+			for(int i=0; i < sz; ++i)
+				data[i] = VecReductionOmpGrammar()( expr(i) );
+
+			std::cout << "OpenMP reduction assign" << std::endl;
+		}
+
+		//
+		// For implementing operator+=()
+		//
+		void plusAssign( const Vector& rhs,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&) {
+			for(int i=0; i < sz; ++i) data[i] += rhs.data[i];
+		}
+
+		void plusAssign( const Vector& rhs,
+			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
+			#pragma omp parallel for
+			for(int i=0; i < sz; ++i) data[i] += rhs.data[i];
+
+			std::cout << "OpenMP vector assign" << std::endl;
+		}
+
+		// Plus & Assignment in single thread
+		template < typename Expr >
+		void plusAssign( const ExprWrapper< Expr >& expr ,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
+			for(int i=0; i < sz; ++i)
+				data[i] += VecExprGrammar()( expr(i) );
+		}
+
+		// Plus & Assignment of elementwise expression in OpenMP
+		template < typename Expr >
+		typename boost::enable_if<
+			proto::matches< Expr, VecElementwiseGrammar >
+		>::type
+		plusAssign( const ExprWrapper< Expr >& expr,
+				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
+			#pragma omp parallel for
+			for(int i=0; i < sz; ++i)
+				data[i] += VecElementwiseGrammar()( expr(i) );
+
+			std::cout << "OpenMP elementwise plus assign" << std::endl;
+		}
+
+		// Plus & Assignment of reduction expression in OpenMP
+		template < typename Expr >
+		typename boost::enable_if<
+			proto::matches< Expr,VecReductionGrammar >
+		>::type
+		plusAssign( const ExprWrapper< Expr >& expr ,
+				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
+			for(int i=0; i < sz; ++i)
+				data[i] += VecReductionOmpGrammar()( expr(i) );
+
+			std::cout << "OpenMP reduction plus assign" << std::endl;
+		}
+
+		//
+		// For implementing operator-=()
+		//
+		void minusAssign( const Vector& rhs,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&) {
+			for(int i=0; i < sz; ++i) data[i] -= rhs.data[i];
+		}
+
+		void minusAssign( const Vector& rhs,
+			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
+			#pragma omp parallel for
+			for(int i=0; i < sz; ++i) data[i] -= rhs.data[i];
+
+			std::cout << "OpenMP vector assign" << std::endl;
+		}
+
+		// Minus & Assignment in single thread
+		template < typename Expr >
+		void minusAssign( const ExprWrapper< Expr >& expr ,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
+			for(int i=0; i < sz; ++i)
+				data[i] -= VecExprGrammar()( expr(i) );
+		}
+
+		// Minus & Assignment of elementwise expression in OpenMP
+		template < typename Expr >
+		typename boost::enable_if<
+			proto::matches< Expr, VecElementwiseGrammar >
+		>::type
+		minusAssign( const ExprWrapper< Expr >& expr ,
+				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
+			#pragma omp parallel for
+			for(int i=0; i < sz; ++i)
+				data[i] -= VecElementwiseGrammar()( expr(i) );
+
+			std::cout << "OpenMP elementwise minus assign" << std::endl;
+		}
+
+		// Plus & Assignment of reduction expression in OpenMP
+		template < typename Expr >
+		typename boost::enable_if<
+			proto::matches< Expr,VecReductionGrammar >
+		>::type
+		minusAssign( const ExprWrapper< Expr >& expr,
+				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
+			for(int i=0; i < sz; ++i)
+				data[i] -= VecReductionOmpGrammar()( expr(i) );
+
+			std::cout << "OpenMP reduction minus assign" << std::endl;
+		}
+
 	public:
 		template <typename Sig> struct result;
 
@@ -105,7 +300,7 @@ namespace DenseLinAlg {
 
 		Vector(const Vector& vec) :
 			sz( vec.sz), data( new double[sz] ) {
-			for (int i = 0; i < sz; i++) data[i] = vec.data[i];
+			assign( vec, PTT::Specified());
 		}
 
 		template < typename Derived >
@@ -125,56 +320,21 @@ namespace DenseLinAlg {
 
 		double dot( const Vector& vec) const
 		{
-			double d = data[0] * vec.data[0];
-			for (int i = 1; i < sz; i++) d += data[i] * vec.data[i];
-			return d;
+			return _dot(vec, PTT::Specified());
 		}
 
 		double abs() const {
-			double aSqr = data[0] * data[0];
-			for (int i = 1; i < sz; i++) aSqr += data[i] * data[i];
-			return sqrt( aSqr);
+			return _abs( PTT::Specified());
 		}
-
 
 		// accessing to an element of this vector
 		double& operator()(int i) { return data[i]; }
 		const double& operator()(int i) const { return data[i]; }
 
 
-		// Assignment in single thread
-		template < typename Expr >
-		void assign( const Expr& expr ,
-			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] = VecExprGrammar()( expr(i) );
-		}
-
-		// Assignment of elementwise expression in OpenMP
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr, VecElementwiseGrammar >
-		>::type
-		assign( const Expr& expr ,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			#pragma omp parallel for
-			for(int i=0; i < sz; ++i)
-				data[i] = VecElementwiseGrammar()( expr(i) );
-
-			std::cout << "OpenMP elementwise assign" << std::endl;
-		}
-
-		// Assignment of reduction expression in OpenMP
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr,VecReductionGrammar >
-		>::type
-		assign( const Expr& expr ,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] = VecReductionOmpGrammar()( expr(i) );
-
-			std::cout << "OpenMP reduction assign" << std::endl;
+		Vector& operator=( const Vector& rhs ) {
+			assign( rhs, PTT::Specified());
+			return *this;
 		}
 
 		// assigning the lhs of a vector expression into this vector
@@ -195,41 +355,6 @@ namespace DenseLinAlg {
 			return *this;
 		}
 
-		// Plus & Assignment in single thread
-		template < typename Expr >
-		void plusAssign( const Expr& expr ,
-			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] += VecExprGrammar()( expr(i) );
-		}
-
-		// Plus & Assignment of elementwise expression in OpenMP
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr, VecElementwiseGrammar >
-		>::type
-		plusAssign( const Expr& expr ,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			#pragma omp parallel for
-			for(int i=0; i < sz; ++i)
-				data[i] += VecElementwiseGrammar()( expr(i) );
-
-			std::cout << "OpenMP elementwise plus assign" << std::endl;
-		}
-
-		// Plus & Assignment of reduction expression in OpenMP
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr,VecReductionGrammar >
-		>::type
-		plusAssign( const Expr& expr ,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] += VecReductionOmpGrammar()( expr(i) );
-
-			std::cout << "OpenMP reduction plus assign" << std::endl;
-		}
-
 		// Adding and assigning the lhs of a vector expression into
 		// this vector
 		template < typename Expr >
@@ -238,47 +363,11 @@ namespace DenseLinAlg {
 			return *this;
 		}
 
-
-		// Minus & Assignment in single thread
-		template < typename Expr >
-		void minusAssign( const Expr& expr ,
-			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] -= VecExprGrammar()( expr(i) );
-		}
-
-		// Minus & Assignment of elementwise expression in OpenMP
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr, VecElementwiseGrammar >
-		>::type
-		minusAssign( const Expr& expr ,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			#pragma omp parallel for
-			for(int i=0; i < sz; ++i)
-				data[i] -= VecElementwiseGrammar()( expr(i) );
-
-			std::cout << "OpenMP elementwise minus assign" << std::endl;
-		}
-
-		// Plus & Assignment of reduction expression in OpenMP
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr,VecReductionGrammar >
-		>::type
-		minusAssign( const Expr& expr ,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] -= VecReductionOmpGrammar()( expr(i) );
-
-			std::cout << "OpenMP reduction minus assign" << std::endl;
-		}
-
 		// Subtracting and assigning the lhs of a vector expression into
 		// this vector
 		template < typename Expr >
 		Vector& operator-=( const Expr& expr ) {
-			plusAssign( expr, PTT::Specified() );
+			minusAssign( expr, PTT::Specified() );
 			return *this;
 		}
 
