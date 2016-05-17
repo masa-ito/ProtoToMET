@@ -25,7 +25,7 @@ namespace SparseLinAlg {
 		LazyIterSolver
 		solve( const DLA::Vector & b, const DLA::Vector & iniGuess,
 			   const double convgergenceCriterion = 1.0e-5,
-			   const int maxIter = 1000) const;
+			   const int maxIter = 10000) const;
 
 		virtual void solveAndAssign(const DLA::Vector & b,
 								const DLA::Vector & iniGuess,
@@ -45,7 +45,7 @@ namespace SparseLinAlg {
 		LazyIterSolver( const AbstIterSolver & solver_,
 						const DLA::Vector & b_, const DLA::Vector & iniGuess_,
 						double convgergenceCriterion = 1.0e-5,
-						const int maxIter_ = 1000) :
+						const int maxIter_ = 10000) :
 			DLA::LazyVectorMaker< LazyIterSolver >( b_.size() ),
 			solver(solver_), b( b_), iniGuess( iniGuess_),
 			criterion(convgergenceCriterion), maxIter( maxIter_) {}
