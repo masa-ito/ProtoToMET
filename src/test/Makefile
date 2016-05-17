@@ -1,7 +1,7 @@
 
 all:	transformingMatrixVectorMultiplication \
 	transformingMatVecMultAndVecSub \
-	transformingMatVecMultAndVecSub_nonMetaOpenMP \
+	transformingMatVecMultAndVecSub_metaOpenMP \
 	transformingDiagMatVecMult \
 	transformingMatDiagmatMatMult \
 	protoDeepCopyMatrixVectorExpr \
@@ -27,8 +27,8 @@ transformingMatVecMultAndVecSub : transformingMatVecMultAndVecSub.cpp \
  ${HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
-transformingMatVecMultAndVecSub_nonMetaOpenMP : \
- transformingMatVecMultAndVecSub_nonMetaOpenMP.cpp \
+transformingMatVecMultAndVecSub_metaOpenMP : \
+ transformingMatVecMultAndVecSub_metaOpenMP.cpp \
  transformingMatVecMultAndVecSub.hpp \
  ${HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} -fopenmp $< -o $@
