@@ -8,6 +8,8 @@
 #ifndef SPARSELINALG_ITERSOLVER_HPP_
 #define SPARSELINALG_ITERSOLVER_HPP_
 
+#include <limits>
+
 #include <DenseLinAlg/DenseLinAlg.hpp>
 
 namespace DLA = DenseLinAlg;
@@ -25,13 +27,13 @@ namespace SparseLinAlg {
 		LazyIterSolver
 		solve( const DLA::Vector & b, const DLA::Vector & iniGuess,
 			   const double convgergenceCriterion = 1.0e-5,
-			   const int maxIter = 10000) const;
+			   const int maxIter = std::numeric_limits<int>::max()) const;
 
 		virtual void solveAndAssign(const DLA::Vector & b,
-								const DLA::Vector & iniGuess,
-								DLA::Vector & lhs,
-								double convgergenceCriterion,
-								int maxIter) const = 0;
+					const DLA::Vector & iniGuess,
+					DLA::Vector & lhs,
+					double convgergenceCriterion,
+					int maxIter= std::numeric_limits<int>::max()) const = 0;
 	};
 
 	struct LazyIterSolver : public DLA::LazyVectorMaker< LazyIterSolver >
@@ -45,7 +47,7 @@ namespace SparseLinAlg {
 		LazyIterSolver( const AbstIterSolver & solver_,
 						const DLA::Vector & b_, const DLA::Vector & iniGuess_,
 						double convgergenceCriterion = 1.0e-5,
-						const int maxIter_ = 10000) :
+						const int maxIter_ = std::numeric_limits<int>::max()) :
 			DLA::LazyVectorMaker< LazyIterSolver >( b_.size() ),
 			solver(solver_), b( b_), iniGuess( iniGuess_),
 			criterion(convgergenceCriterion), maxIter( maxIter_) {}
@@ -80,10 +82,10 @@ namespace SparseLinAlg {
 				coeff( coefficients), precond( preconditioner) {}
 
 		virtual void solveAndAssign( const DLA::Vector & b,
-								const DLA::Vector & iniGuess,
-								DLA::Vector & lhs,
-								const double convgergenceCriterion,
-								const int maxIter) const
+					const DLA::Vector & iniGuess,
+					DLA::Vector & lhs,
+					const double convgergenceCriterion,
+					const int maxIter = std::numeric_limits<int>::max()) const
 		{
 			DLA::Vector resid( b.columnSize()), z( b.columnSize()),
 					q( b.columnSize());

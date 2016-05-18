@@ -51,12 +51,12 @@ protoDeepCopyMatrixVectorExpr : protoDeepCopyMatrixVectorExpr.cpp \
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 diagPrecondConjGrad_IntroToCFD_Exam4_3 : \
- diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp \
+ diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp airCooledCylinder.hpp \
  ${DLA_HEADERS} ${SLA_HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 diagPrecondConjGrad_IntroToCFD_Exam4_3_metaOpenMP : \
- diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp \
+ diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp airCooledCylinder.hpp \
  ${DLA_HEADERS} ${SLA_HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} -fopenmp $< -o $@	
 
