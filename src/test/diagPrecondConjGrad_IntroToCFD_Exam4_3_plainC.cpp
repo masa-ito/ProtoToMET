@@ -1,5 +1,5 @@
 /*
- * diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp
+ * diagPrecondConjGrad_IntroToCFD_Exam4_3_plainC.cpp
  *
  * ref) H. K. Versteeg and W. Malalasekera,
  *     "An Introduction  to Computational Fluid Dynamics,
@@ -12,12 +12,7 @@
  *      Author: Masakatsu ITO
  */
 
-#ifdef _OPENMP
-#include <ParallelizationTypeTag/OpenMP.hpp>
-#endif
-
 #include "airCooledCylinder.hpp"
-
 
 int main(int argc, char *argv[]) {
 
@@ -78,11 +73,13 @@ int main(int argc, char *argv[]) {
 	// const int maxIter = 100;
 
 	DLA::Vector temperature( NumCtrlVol);
+	// temperature = cg.solve(rhsVec, tempGuess, convergenceCriterion);
 
 	// Measuring the elapsed time of our conjugate gradient procedure
 	auto start = std::chrono::system_clock::now();
 
-	temperature = cg.solve(rhsVec, tempGuess, convergenceCriterion);
+	DLA::diagPrecondConGrad( temperature,
+			coeffMat, rhsVec, tempGuess, convergenceCriterion);
 
 	auto end = std::chrono::system_clock::now();
 
@@ -90,9 +87,8 @@ int main(int argc, char *argv[]) {
 	std::cout << std::endl;
 	std::cout << "elapsed time of conjugate gradient = "
 	  << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count()
-		  << " msec."
-		  << std::endl;
-
+	  << " msec."
+	  << std::endl;
 
 	if ( NumCtrlVol < 50 )
 		printCalculatedAndExactTemperatureDistributions< DLA::Vector >(

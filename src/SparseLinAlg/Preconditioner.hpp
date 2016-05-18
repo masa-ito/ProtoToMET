@@ -76,7 +76,7 @@ namespace SparseLinAlg {
 		{
 			#pragma omp parallel for
 			for (int i = 0; i < sz; i++) diagInv[ i] = 1.0 / mat(i, i);
-			std::cout << "OpenMP preconditioner init" << std::endl;
+			// std::cout << "OpenMP preconditioner init" << std::endl;
 		}
 
 		void _solveAndAssign(const DLA::Vector & b, DLA::Vector & lhs,
@@ -92,7 +92,7 @@ namespace SparseLinAlg {
 		{
 			#pragma omp parallel for
 			for (int i = 0; i < sz; i++) lhs(i) = diagInv[i] * b(i);
-			std::cout << "OpenMP preconditioner solve" << std::endl;
+			// std::cout << "OpenMP preconditioner solve" << std::endl;
 		}
 
 	public :

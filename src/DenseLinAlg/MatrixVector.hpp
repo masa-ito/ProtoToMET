@@ -104,7 +104,7 @@ namespace DenseLinAlg {
 			#pragma omp parallel for reduction (+:d)
 			for (int i = 1; i < sz; i++) d += data[i] * vec.data[i];
 
-			std::cout << "OpenMP dot product" << std::endl;
+			// std::cout << "OpenMP dot product" << std::endl;
 
 			return d;
 		}
@@ -124,7 +124,7 @@ namespace DenseLinAlg {
 			#pragma omp parallel for reduction (+:aSqr)
 			for (int i = 1; i < sz; i++) aSqr += data[i] * data[i];
 
-			std::cout << "OpenMP vector abs" << std::endl;
+			// std::cout << "OpenMP vector abs" << std::endl;
 
 			return sqrt( aSqr);
 		}
@@ -142,7 +142,7 @@ namespace DenseLinAlg {
 			#pragma omp parallel for
 			for(int i=0; i < sz; ++i) data[i] = rhs.data[i];
 
-			std::cout << "OpenMP vector assign" << std::endl;
+			// std::cout << "OpenMP vector assign" << std::endl;
 		}
 
 		// Assignment in single thread
@@ -164,7 +164,7 @@ namespace DenseLinAlg {
 			for(int i=0; i < sz; ++i)
 				data[i] = VecElementwiseGrammar()( expr(i) );
 
-			std::cout << "OpenMP elementwise assign" << std::endl;
+			// std::cout << "OpenMP elementwise assign" << std::endl;
 		}
 
 		// Assignment of reduction expression in OpenMP
@@ -177,7 +177,7 @@ namespace DenseLinAlg {
 			for(int i=0; i < sz; ++i)
 				data[i] = VecReductionOmpGrammar()( expr(i) );
 
-			std::cout << "OpenMP reduction assign" << std::endl;
+			// std::cout << "OpenMP reduction assign" << std::endl;
 		}
 
 		//
@@ -193,7 +193,7 @@ namespace DenseLinAlg {
 			#pragma omp parallel for
 			for(int i=0; i < sz; ++i) data[i] += rhs.data[i];
 
-			std::cout << "OpenMP vector assign" << std::endl;
+			// std::cout << "OpenMP vector assign" << std::endl;
 		}
 
 		// Plus & Assignment in single thread
@@ -215,7 +215,7 @@ namespace DenseLinAlg {
 			for(int i=0; i < sz; ++i)
 				data[i] += VecElementwiseGrammar()( expr(i) );
 
-			std::cout << "OpenMP elementwise plus assign" << std::endl;
+			// std::cout << "OpenMP elementwise plus assign" << std::endl;
 		}
 
 		// Plus & Assignment of reduction expression in OpenMP
@@ -228,7 +228,7 @@ namespace DenseLinAlg {
 			for(int i=0; i < sz; ++i)
 				data[i] += VecReductionOmpGrammar()( expr(i) );
 
-			std::cout << "OpenMP reduction plus assign" << std::endl;
+			// std::cout << "OpenMP reduction plus assign" << std::endl;
 		}
 
 		//
@@ -244,7 +244,7 @@ namespace DenseLinAlg {
 			#pragma omp parallel for
 			for(int i=0; i < sz; ++i) data[i] -= rhs.data[i];
 
-			std::cout << "OpenMP vector assign" << std::endl;
+			// std::cout << "OpenMP vector assign" << std::endl;
 		}
 
 		// Minus & Assignment in single thread
@@ -266,7 +266,7 @@ namespace DenseLinAlg {
 			for(int i=0; i < sz; ++i)
 				data[i] -= VecElementwiseGrammar()( expr(i) );
 
-			std::cout << "OpenMP elementwise minus assign" << std::endl;
+			// std::cout << "OpenMP elementwise minus assign" << std::endl;
 		}
 
 		// Plus & Assignment of reduction expression in OpenMP
@@ -279,7 +279,7 @@ namespace DenseLinAlg {
 			for(int i=0; i < sz; ++i)
 				data[i] -= VecReductionOmpGrammar()( expr(i) );
 
-			std::cout << "OpenMP reduction minus assign" << std::endl;
+			// std::cout << "OpenMP reduction minus assign" << std::endl;
 		}
 
 	public:
