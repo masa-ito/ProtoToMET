@@ -15,11 +15,11 @@ CPP11STD = -std=c++11
 
 diagPrecondConGrad_plainC.o : diagPrecondConGrad_plainC.cpp \
  ${HEADERS}
-	${CXX} ${CPP11STD} ${INCDIR} -c $<
+	${CXX} ${CPP11STD} ${INCDIR} -O3 -Winline -c $<
 
 diagPrecondConGrad_nonMetaOpenMP.o : diagPrecondConGrad_nonMetaOpenMP.cpp \
  ${HEADERS}
-	${CXX} ${CPP11STD} ${INCDIR} -fopenmp -c $<
+	${CXX} ${CPP11STD} ${INCDIR} -O3 -fopenmp -Winline -c $<
 
 clean:
 	rm ${TARGET} 
