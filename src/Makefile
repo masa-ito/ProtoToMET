@@ -37,7 +37,7 @@ CPP11STD = -std=c++11
 vecAdd : vecAdd.cpp vecAdd.hpp
 	${CXX} ${CPP11STD} $< -o $@
 	
-vecAddSingleThread : vecAddSingleThread.cpp vecAddMetaOpenMP.hpp ${HEADERS}
+vecAddSingleThread : vecAddMetaOpenMP.cpp vecAddMetaOpenMP.hpp ${HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
 vecAddMetaOpenMP : vecAddMetaOpenMP.cpp vecAddMetaOpenMP.hpp ${HEADERS}

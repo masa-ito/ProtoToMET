@@ -27,7 +27,7 @@ class Vector;
 // as the state variable,and distribute that index over the child nodes.
 struct VecElmTrans : proto::or_<
 	proto::when< proto::terminal< Vector>,
-				proto::_make_function( proto::_, proto::_state) >,
+	             proto::_make_function( proto::_, proto::_state) >,
 	proto::plus< VecElmTrans, VecElmTrans> ,
 	proto::minus< VecElmTrans, VecElmTrans>
 > {};
@@ -43,10 +43,29 @@ struct VecExprTrans : proto::or_<
 	proto::minus< VecExprTrans, VecExprTrans>
 > {};
 
+
 // The tranformation rule for linear algebraic expressions
 struct LinAlgExprTrans : proto::or_<
-	VecExprTrans //,
+	VecExprTrans
 	// MatExprTrans
+> {};
+
+
+// Callable transform object to make a proto exression
+// for lazily assigning a vector expression into a vector
+struct AssignVecExpr;
+struct PlusAssignVecExpr;
+
+// The transformation rule for assigning a vector expression
+// into a vector object
+struct AssignVecExprTrans : proto::when<
+	VecExprTrans,
+	AssignVecExpr( proto::_, proto::_state, proto::_data)
+> {};
+
+struct PlusAssignVecExprTrans : proto::when<
+	VecExprTrans,
+	PlusAssignVecExpr( proto::_, proto::_state, proto::_data)
 > {};
 
 
@@ -71,6 +90,7 @@ struct LinAlgExpr
 };
 
 
+
 //
 // Vector data are stored in an heap array.
 //
@@ -78,6 +98,7 @@ class Vector {
 	private:
 		int sz;
 		double* data;
+
 
 public:
 	template <typename Sig> struct result;
@@ -105,53 +126,75 @@ public:
 	double& operator()(int i) { return data[i]; }
 	const double& operator()(int i) const { return data[i]; }
 
-	template < typename Expr >
-	void assign( const Expr& expr ,
-		const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
-		for(int i=0; i < sz; ++i)
-			data[i] = VecExprTrans()( expr(i) );
-	}
-
-	template < typename Expr >
-	void assign( const Expr& expr ,
-			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-		#pragma omp parallel for
-		for(int i=0; i < sz; ++i)
-			data[i] = VecExprTrans()( expr(i) );
-
-		std::cout << "OpenMP assign" << std::endl;
-	}
-
-
 	// assigning the lhs of a vector expression into this vector
 	template<typename Expr>
 	Vector& operator=( const Expr& expr ) {
-		assign( expr, PTT::Specified() );
+		AssignVecExprTrans()( expr, *this, PTT::Specified());
 		return *this;
-	}
-
-	template < typename Expr >
-	void plusAssign( const Expr& expr ,
-			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
-		for(int i=0; i < sz; ++i)
-			data[i] += VecExprTrans()( expr(i) );
-	}
-
-	template < typename Expr >
-	void plusAssign( const Expr& expr ,
-				 const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-		#pragma omp parallel for
-		for(int i=0; i < sz; ++i)
-			data[i] += VecExprTrans()( expr(i) );
-
-		std::cout << "OpenMP plusAssign" << std::endl;
 	}
 
 	// assigning and adding the lhs of a vector expression into this vector
 	template<typename Expr>
 	Vector& operator+=( const Expr& expr ) {
-		plusAssign( expr, PTT::Specified() );
+		PlusAssignVecExprTrans()( expr, *this, PTT::Specified() );
 		return *this;
+	}
+
+	friend class AssignVecExpr;
+	friend class PlusAssignVecExpr;
+};
+
+
+
+struct AssignVecExpr : proto::callable
+{
+	typedef void result_type;
+
+	template < typename Expr >
+	result_type
+	operator()( const Expr& expr, Vector& rhs,
+		const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) const
+	{
+		for(int i=0; i < rhs.sz; ++i)
+				rhs.data[i] = VecExprTrans()( expr(i) );
+		return;
+	}
+
+	template < typename Expr >
+	result_type
+	operator()( const Expr& expr, Vector& rhs,
+			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) const
+	{
+		#pragma omp parallel for
+		for(int i=0; i < rhs.sz; ++i)
+				rhs.data[i] = VecExprTrans()( expr(i) );
+		return;
+	}
+};
+
+struct PlusAssignVecExpr : proto::callable
+{
+	typedef void result_type;
+
+	template < typename Expr >
+	result_type
+	operator()( const Expr& expr, Vector& rhs,
+		const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) const
+	{
+		for(int i=0; i < rhs.sz; ++i)
+				rhs.data[i] += VecExprTrans()( expr(i) );
+		return;
+	}
+
+	template < typename Expr >
+	result_type
+	operator()( const Expr& expr, Vector& rhs,
+			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) const
+	{
+		#pragma omp parallel for
+		for(int i=0; i < rhs.sz; ++i)
+				rhs.data[i] += VecExprTrans()( expr(i) );
+		return;
 	}
 };
 
@@ -186,50 +229,6 @@ struct ExpressionSyntaxChecker
 
 
 }
-
-
-namespace DLA = DenseLinAlg;
-
-void testVecAdd()
-{
-
-	DLA::ExpressionSyntaxChecker< DLA::LinAlgExprTrans >
-		syntaxChecker =
-				DLA::ExpressionSyntaxChecker< DLA::LinAlgExprTrans >();
-    // proto::_default<> trans;
-
-    // lazy_vectors with 3 elements each.
-    DLA::Vector v1( 3, 1.0 ), v2( 3, 2.0 ), v3( 3, 3.0 );
-
-    // Add two vectors lazily and get the 2nd element.
-    std::cout << "Checking if v2 + v3 matches to LinAlgExprTrans rule ..."
-    		<< std::endl;
-    syntaxChecker( v2 + v3 );
-
-    std::cout << "Checking if (v2 + v3)[2] matches to LinAlgExprTrans rule ..."
-    		<< std::endl;
-    syntaxChecker( ( v2 + v3 )( 2 ) );
-
-    /* std::cout << "Checking if VecExprOpt()( ( v2 + v3 )( 2 ) )";
-    std::cout << " matches to VecExprOpt rule ..." << std::endl;
-    syntaxChecker( LinAlgExprTrans()( ( v2 + v3 )( 2 ) ) ); */
-
-    // Look ma, no temporaries!
-    double d1 = DLA::LinAlgExprTrans()( ( v2 + v3 )( 2 ) );
-    // double d1 = trans( LinAlgExprTrans()( ( v2 + v3 )( 2 ) ) );
-    std::cout << "DLA::LinAlgExprTrans()( ( v2 + v3 )( 2 ) ) = " <<
-    		d1 << std::endl;
-
-    // Subtract two vectors and add the result to a third vector.
-    v1 += v2 - v3;                  // Still no temporaries!
-    std::cout << "v1 += v2 - v3" << std::endl;
-    std::cout << "v1 =";
-    std::cout << '{' << v1(0) << ',' << v1(1)
-              << ',' << v1(2) << ',' << v1(3) << '}' << std::endl;
-
-    return;
-}
-
 
 
 
