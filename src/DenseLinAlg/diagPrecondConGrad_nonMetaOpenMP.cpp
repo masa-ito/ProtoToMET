@@ -19,11 +19,15 @@ inline void makePreconditioner(double * invDiag, double** const coeff, int sz)
 inline void vecMinusMatMultVec(double* resid,
 		double * const b, double** const coeff, double * const x, int sz)
 {
-	for (int ri = 0; ri < sz; ri++) {
-		double p = coeff[ri][0] * x[0];
-		#pragma omp parallel for reduction (+:p)
-		for (int ci = 1; ci  < sz; ci++) p += coeff[ri][ci] * x[ci];
-		resid[ri] = b[ri] - p;
+	int ri, ci;
+	double matVec;
+
+	#pragma omp parallel for \
+	 	 	 private( ri, ci, matVec) shared( sz, resid)
+	for (ri = 0; ri < sz; ri++) {
+		matVec = coeff[ri][0] * x[0];
+		for (ci = 1; ci  < sz; ci++) matVec += coeff[ri][ci] * x[ci];
+		resid[ri] = b[ri] - matVec;
 	}
 }
 
@@ -46,16 +50,15 @@ inline void vectorCopy( double* p, double * const z, int sz)
 inline void matMultVec( double* q,
 		double** const coeff, double * const p, int sz)
 {
-	// #pragma omp parallel for
-	// for (int ri = 0; ri < sz; ri++)	q[ri] = coeff[ri][0] * p[0];
+	int ri, ci;
+	double matVec;
 
-	for (int ri = 0; ri < sz; ri++) {
-		double qri = coeff[ri][0] * p[0];
-
-		#pragma omp parallel for reduction (+:qri)
-		for (int ci = 1; ci < sz; ci++)	qri += coeff[ri][ci] * p[ci];
-
-		q[ri] = qri;
+	#pragma omp parallel for default(none) \
+	            private( ri, ci, matVec) shared( sz, q)
+	for (ri = 0; ri < sz; ri++) {
+		matVec = coeff[ri][0] * p[0];
+		for (ci = 1; ci < sz; ci++)	matVec += coeff[ri][ci] * p[ci];
+		q[ri] = matVec;
 	}
 }
 
