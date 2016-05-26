@@ -127,14 +127,14 @@ public:
 	const double& operator()(int i) const { return data[i]; }
 
 	// assigning the lhs of a vector expression into this vector
-	template<typename Expr>
+	template < typename Expr >
 	Vector& operator=( const Expr& expr ) {
 		AssignVecExprTrans()( expr, *this, PTT::Specified());
 		return *this;
 	}
 
 	// assigning and adding the lhs of a vector expression into this vector
-	template<typename Expr>
+	template < typename Expr >
 	Vector& operator+=( const Expr& expr ) {
 		PlusAssignVecExprTrans()( expr, *this, PTT::Specified() );
 		return *this;
@@ -145,7 +145,8 @@ public:
 };
 
 
-
+// Proto primitive transform object for implemeting
+// operator=(Vector&, {vector expression})
 struct AssignVecExpr : proto::callable
 {
 	typedef void result_type;
@@ -172,6 +173,8 @@ struct AssignVecExpr : proto::callable
 	}
 };
 
+// Proto primitive transform object for implemeting
+// operator+=(Vector&, {vector expression})
 struct PlusAssignVecExpr : proto::callable
 {
 	typedef void result_type;
