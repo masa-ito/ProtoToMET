@@ -230,6 +230,23 @@ namespace DenseLinAlg {
 		// DiagMatExprGrammar
 	> {};
 
+	// Callable transform object
+	// for lazily assigning a vector expression into a vector
+	struct AssignVecExpr;
+	// struct PlusAssignVecExpr;
+
+	// The transformation rule for assigning a vector expression
+	// into a vector object
+	struct AssignVecExprGrammar : proto::when<
+		VecExprGrammar,
+		AssignVecExpr( proto::_, proto::_state, proto::_data)
+	> {};
+
+	/* struct PlusAssignVecExprTrans : proto::when<
+		VecExprTrans,
+		PlusAssignVecExpr( proto::_, proto::_state, proto::_data)
+	> {}; */
+
 
 	template <typename GrammarType>
 	struct GrammarChecker
@@ -330,42 +347,10 @@ namespace DenseLinAlg {
 		double& operator()(int i) { return data[i]; }
 		const double& operator()(int i) const { return data[i]; }
 
-		template < typename Expr >
-		void assign( const Expr& expr ,
-			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] = VecExprGrammar()( expr(i) );
-		}
-
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr, VecElementwiseGrammar >
-		>::type
-		assign( const Expr& expr ,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			#pragma omp parallel for
-			for(int i=0; i < sz; ++i)
-				data[i] = VecElementwiseGrammar()( expr(i) );
-
-			std::cout << "OpenMP elementwise assign" << std::endl;
-		}
-
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr,VecReductionGrammar >
-		>::type
-		assign( const Expr& expr ,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] = VecReductionOmpGrammar()( expr(i) );
-
-			std::cout << "OpenMP reduction assign" << std::endl;
-		}
-
 		// assigning the lhs of a vector expression into this vector
 		template<typename Expr>
 		Vector& operator=( const Expr& expr ) {
-			assign( expr, PTT::Specified() );
+			AssignVecExprGrammar()( expr, *this, PTT::Specified());
 			return *this;
 		}
 
@@ -398,6 +383,8 @@ namespace DenseLinAlg {
 				const Vector & initGuessVec,
 				double convergenceCriterion); */
 
+		friend class AssignVecExpr;
+		// friend class PlusAssignVecExpr;
 	};
 
 
@@ -485,6 +472,49 @@ namespace DenseLinAlg {
 				const Matrix & coeffMat, const Vector & rhsVec,
 				const Vector & initGuessVec,
 				double convergenceCriterion); */
+	};
+
+
+	// Primitive transform object for lazily implemeting
+	// operator=(Vector&, {vector expression})
+	struct AssignVecExpr : proto::callable
+	{
+		typedef void result_type;
+
+		template < typename Expr >
+		result_type
+		operator()( const Expr& expr, Vector& rhs,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) const
+		{
+			for(int i=0; i < rhs.sz; ++i)
+					rhs.data[i] = VecExprGrammar()( expr(i) );
+			return;
+		}
+
+		template < typename Expr >
+		typename boost::enable_if<
+			proto::matches< Expr, VecElementwiseGrammar >, result_type
+		>::type
+		operator()( const Expr& expr, Vector& rhs,
+				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) const
+		{
+			#pragma omp parallel for
+			for(int i=0; i < rhs.sz; ++i)
+					rhs.data[i] = VecElementwiseGrammar()( expr(i) );
+			return;
+		}
+
+		template < typename Expr >
+		typename boost::enable_if<
+			proto::matches< Expr, VecReductionGrammar >, result_type
+		>::type
+		operator()( const Expr& expr, Vector& rhs,
+				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) const
+		{
+			for(int i=0; i < rhs.sz; ++i)
+					rhs.data[i] = VecReductionOmpGrammar()( expr(i) );
+			return;
+		}
 	};
 
 
@@ -588,84 +618,6 @@ namespace DenseLinAlg {
 	BOOST_PROTO_DEFINE_OPERATORS(IsExpr, Domain)
 
 }
-
-
-// namespace DLA = DenseLinAlg;
-
-void testMatVecMultAndVecAdd()
-{
-	using namespace DenseLinAlg;
-
-    Matrix matA( 3, 3);
-    Vector vecX(3), vecB(3), vecR(3);
-
-    matA(0,0) = 1.00; matA(0,1) = 1.01; matA(0,2) = 1.02;
-    matA(1,0) = 1.10; matA(1,1) = 1.11; matA(1,2) = 1.12;
-    matA(2,0) = 1.20; matA(2,1) = 1.21; matA(2,2) = 1.22;
-
-    vecX(0) = 1.0;
-    vecX(1) = 2.0;
-    vecX(2) = 3.0;
-
-    vecB(0) = 4.0;
-    vecB(1) = 5.0;
-    vecB(2) = 6.0;
-
-	//GrammarChecker< ExprGrammar >
-	//	checker = GrammarChecker< ExprGrammar >();
-
-    // Vector object alons is not an expression template.
-	// checker( vecB );
-
-    std::cout
-		<< "Checking if (vecB - vecX) matches to VecElementwiseGrammar ..."
-        << std::endl;
-    GrammarChecker< VecElementwiseGrammar >()( vecB - vecX );
-
-    std::cout
-		<< "Checking if (vecB - vecX)(2) matches to VecElementwiseGrammar  ..."
-        << std::endl;
-    GrammarChecker< VecElementwiseGrammar >()( ( vecB - vecX )(2) );
-
-
-    std::cout
-		<< "Checking if (matA * vecX) matches to VecReductionGrammar ..."
-        << std::endl;
-    GrammarChecker< VecReductionGrammar >()( matA * vecX );
-
-    std::cout
-		<< "Checking if (matA * vecX)(2) matches to VecReductionGrammar..."
-        << std::endl;
-    GrammarChecker< VecReductionGrammar >()( ( matA * vecX )(2) );
-
-
-    std::cout
-		<< "Checking if (vecB - matA * vecX) "
-		<< "matches to VecReductionGrammar ..."
-        << std::endl;
-    GrammarChecker< VecReductionGrammar >()( vecB - matA * vecX );
-
-    std::cout << "Checking if ( vecB - matA * vecX)(2) "
-    		<< "matches to VecReductionGrammar ..."
-        	<< std::endl;
-    GrammarChecker< VecReductionGrammar >()( ( vecB - matA * vecX)(2) );
-
-    double elm2 = VecExprGrammar()( ( vecB - matA * vecX)(2) );
-
-    std::cout << "( vecB - matA * vecX)(2) = " << elm2 << std::endl;
-    // This should be  -1.28 .
-
-    vecR = vecB - matA * vecX;
-
-    std::cout << " vecR = vecB - matA * vecX = " << std::endl;
-    std::cout << " ( " << vecR(0) << ", " << vecR(1) << ", " <<
-    		vecR(2) << ")" << std::endl;
-    // This should be ( -2.08 , -1.68 , -1.28) .
-
-	return;
-}
-
-
 
 
 

@@ -51,7 +51,7 @@ struct LinAlgExprTrans : proto::or_<
 > {};
 
 
-// Callable transform object to make a proto exression
+// Callable transform object
 // for lazily assigning a vector expression into a vector
 struct AssignVecExpr;
 struct PlusAssignVecExpr;

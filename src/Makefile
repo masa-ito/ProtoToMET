@@ -43,7 +43,7 @@ vecAddSingleThread : vecAddMetaOpenMP.cpp vecAddMetaOpenMP.hpp ${HEADERS}
 vecAddMetaOpenMP : vecAddMetaOpenMP.cpp vecAddMetaOpenMP.hpp ${HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} -fopenmp $< -o $@
 
-matVecMultAndVecSubSingleThread : matVecMultAndVecSubSingleThread.cpp \
+matVecMultAndVecSubSingleThread : matVecMultAndVecSubMetaOpenMP.cpp \
  matVecMultAndVecSubMetaOpenMP.hpp ${HEADERS}
 	${CXX} ${CPP11STD} ${INCDIR} $< -o $@
 
