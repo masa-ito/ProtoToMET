@@ -153,22 +153,22 @@ struct AssignVecExpr : proto::callable
 
 	template < typename Expr >
 	result_type
-	operator()( const Expr& expr, Vector& rhs,
+	operator()( const Expr& expr, Vector& lhs,
 		const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) const
 	{
-		for(int i=0; i < rhs.sz; ++i)
-				rhs.data[i] = VecExprTrans()( expr(i) );
+		for(int i=0; i < lhs.sz; ++i)
+				lhs.data[i] = VecExprTrans()( expr(i) );
 		return;
 	}
 
 	template < typename Expr >
 	result_type
-	operator()( const Expr& expr, Vector& rhs,
+	operator()( const Expr& expr, Vector& lhs,
 			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) const
 	{
 		#pragma omp parallel for
-		for(int i=0; i < rhs.sz; ++i)
-				rhs.data[i] = VecExprTrans()( expr(i) );
+		for(int i=0; i < lhs.sz; ++i)
+				lhs.data[i] = VecExprTrans()( expr(i) );
 		return;
 	}
 };
@@ -181,22 +181,22 @@ struct PlusAssignVecExpr : proto::callable
 
 	template < typename Expr >
 	result_type
-	operator()( const Expr& expr, Vector& rhs,
+	operator()( const Expr& expr, Vector& lhs,
 		const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) const
 	{
-		for(int i=0; i < rhs.sz; ++i)
-				rhs.data[i] += VecExprTrans()( expr(i) );
+		for(int i=0; i < lhs.sz; ++i)
+				lhs.data[i] += VecExprTrans()( expr(i) );
 		return;
 	}
 
 	template < typename Expr >
 	result_type
-	operator()( const Expr& expr, Vector& rhs,
+	operator()( const Expr& expr, Vector& lhs,
 			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) const
 	{
 		#pragma omp parallel for
-		for(int i=0; i < rhs.sz; ++i)
-				rhs.data[i] += VecExprTrans()( expr(i) );
+		for(int i=0; i < lhs.sz; ++i)
+				lhs.data[i] += VecExprTrans()( expr(i) );
 		return;
 	}
 };
