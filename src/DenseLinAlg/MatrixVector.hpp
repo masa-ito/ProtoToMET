@@ -71,8 +71,6 @@ namespace DenseLinAlg {
 		}
 	};
 
-	// struct SparseLinAlg::LazyIterSolver;
-	// struct SparseLinAlg::LazyPreconditioner;
 
 	class Matrix;
 
@@ -80,6 +78,33 @@ namespace DenseLinAlg {
 			const Matrix & coeffMat, const Vector & rhsVec,
 			const Vector & initGuessVec,
 			double convergenceCriterion);
+
+	// These classes are to be used as the template parameter
+	// for AssignType.
+	struct AssignFunctor {  // operator=()
+		void operator()( double& lhs, double rhs) const { lhs = rhs; }
+	};
+	struct PlusAssignFunctor {  // operator+=()
+		void operator()( double& lhs, double rhs) const { lhs += rhs; }
+	};
+	struct MinusAssignFunctor {  // operator-=()
+		void operator()( double& lhs, double rhs) const { lhs -= rhs; }
+	};
+
+	template < typename AssignType > struct AssignVecExpr;
+
+	template < typename AssignType >
+	struct AssignVector {
+		void operator()(
+			const Vector& rhs, Vector& lhs,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& )
+		const;
+
+		void operator()(
+			const Vector& rhs, Vector& lhs,
+			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& )
+		const;
+	};
 
 
 	class Vector {
@@ -129,158 +154,6 @@ namespace DenseLinAlg {
 			return sqrt( aSqr);
 		}
 
-		//
-		// For implementing operator=()
-		//
-		void assign( const Vector& rhs,
-			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&) {
-			for(int i=0; i < sz; ++i) data[i] = rhs.data[i];
-		}
-
-		void assign( const Vector& rhs,
-			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			#pragma omp parallel for
-			for(int i=0; i < sz; ++i) data[i] = rhs.data[i];
-
-			// std::cout << "OpenMP vector assign" << std::endl;
-		}
-
-		// Assignment in single thread
-		template < typename Expr >
-		void assign( const ExprWrapper< Expr >& expr,
-			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] = VecExprGrammar()( expr(i) );
-		}
-
-		// Assignment of elementwise expression in OpenMP
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr, VecElementwiseGrammar >
-		>::type
-		assign( const ExprWrapper< Expr >& expr,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			#pragma omp parallel for
-			for(int i=0; i < sz; ++i)
-				data[i] = VecElementwiseGrammar()( expr(i) );
-
-			// std::cout << "OpenMP elementwise assign" << std::endl;
-		}
-
-		// Assignment of reduction expression in OpenMP
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr,VecReductionGrammar >
-		>::type
-		assign( const ExprWrapper< Expr >& expr ,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] = VecReductionOmpGrammar()( expr(i) );
-
-			// std::cout << "OpenMP reduction assign" << std::endl;
-		}
-
-		//
-		// For implementing operator+=()
-		//
-		void plusAssign( const Vector& rhs,
-			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&) {
-			for(int i=0; i < sz; ++i) data[i] += rhs.data[i];
-		}
-
-		void plusAssign( const Vector& rhs,
-			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			#pragma omp parallel for
-			for(int i=0; i < sz; ++i) data[i] += rhs.data[i];
-
-			// std::cout << "OpenMP vector assign" << std::endl;
-		}
-
-		// Plus & Assignment in single thread
-		template < typename Expr >
-		void plusAssign( const ExprWrapper< Expr >& expr ,
-			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] += VecExprGrammar()( expr(i) );
-		}
-
-		// Plus & Assignment of elementwise expression in OpenMP
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr, VecElementwiseGrammar >
-		>::type
-		plusAssign( const ExprWrapper< Expr >& expr,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			#pragma omp parallel for
-			for(int i=0; i < sz; ++i)
-				data[i] += VecElementwiseGrammar()( expr(i) );
-
-			// std::cout << "OpenMP elementwise plus assign" << std::endl;
-		}
-
-		// Plus & Assignment of reduction expression in OpenMP
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr,VecReductionGrammar >
-		>::type
-		plusAssign( const ExprWrapper< Expr >& expr ,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] += VecReductionOmpGrammar()( expr(i) );
-
-			// std::cout << "OpenMP reduction plus assign" << std::endl;
-		}
-
-		//
-		// For implementing operator-=()
-		//
-		void minusAssign( const Vector& rhs,
-			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >&) {
-			for(int i=0; i < sz; ++i) data[i] -= rhs.data[i];
-		}
-
-		void minusAssign( const Vector& rhs,
-			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			#pragma omp parallel for
-			for(int i=0; i < sz; ++i) data[i] -= rhs.data[i];
-
-			// std::cout << "OpenMP vector assign" << std::endl;
-		}
-
-		// Minus & Assignment in single thread
-		template < typename Expr >
-		void minusAssign( const ExprWrapper< Expr >& expr ,
-			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] -= VecExprGrammar()( expr(i) );
-		}
-
-		// Minus & Assignment of elementwise expression in OpenMP
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr, VecElementwiseGrammar >
-		>::type
-		minusAssign( const ExprWrapper< Expr >& expr ,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			#pragma omp parallel for
-			for(int i=0; i < sz; ++i)
-				data[i] -= VecElementwiseGrammar()( expr(i) );
-
-			// std::cout << "OpenMP elementwise minus assign" << std::endl;
-		}
-
-		// Plus & Assignment of reduction expression in OpenMP
-		template < typename Expr >
-		typename boost::enable_if<
-			proto::matches< Expr,VecReductionGrammar >
-		>::type
-		minusAssign( const ExprWrapper< Expr >& expr,
-				const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& ) {
-			for(int i=0; i < sz; ++i)
-				data[i] -= VecReductionOmpGrammar()( expr(i) );
-
-			// std::cout << "OpenMP reduction minus assign" << std::endl;
-		}
 
 	public:
 		template <typename Sig> struct result;
@@ -300,7 +173,9 @@ namespace DenseLinAlg {
 
 		Vector(const Vector& vec) :
 			sz( vec.sz), data( new double[sz] ) {
-			assign( vec, PTT::Specified());
+			AssignVector< AssignFunctor >()(
+				vec, *this, PTT::Specified()
+			);
 		}
 
 		template < typename Derived >
@@ -333,7 +208,9 @@ namespace DenseLinAlg {
 
 
 		Vector& operator=( const Vector& rhs ) {
-			assign( rhs, PTT::Specified());
+			AssignVector< AssignFunctor >()(
+				rhs, *this, PTT::Specified()
+			);
 			return *this;
 		}
 
@@ -344,8 +221,10 @@ namespace DenseLinAlg {
 			// otherwise the following operator=() cannot be
 			// instanciated for SparseLinAlg::LazyIterSolver
 			// which is the derived class of LazyVectorMaker< > .
-
-			assign( expr, PTT::Specified() );
+			AssignVecExpr< AssignFunctor >()(
+					expr, VecExprTagGrammar()( expr),
+					*this, PTT::Specified()
+			);
 			return *this;
 		}
 
@@ -355,19 +234,31 @@ namespace DenseLinAlg {
 			return *this;
 		}
 
-		// Adding and assigning the lhs of a vector expression into
-		// this vector
-		template < typename Expr >
-		Vector& operator+=( const Expr& expr ) {
-			plusAssign( expr, PTT::Specified() );
+		// plus assigning the lhs of a vector expression into this vector
+		template <typename Expr>
+		Vector& operator+=( const ExprWrapper< Expr >& expr ) {
+			// NOTE that this argument type should be ExprWrapper< >,
+			// otherwise the following operator=() cannot be
+			// instanciated for SparseLinAlg::LazyIterSolver
+			// which is the derived class of LazyVectorMaker< > .
+			AssignVecExpr< PlusAssignFunctor >()(
+					expr, VecExprTagGrammar()( expr),
+					*this, PTT::Specified()
+			);
 			return *this;
 		}
 
-		// Subtracting and assigning the lhs of a vector expression into
-		// this vector
-		template < typename Expr >
-		Vector& operator-=( const Expr& expr ) {
-			minusAssign( expr, PTT::Specified() );
+		// minus assigning the lhs of a vector expression into this vector
+		template <typename Expr>
+		Vector& operator-=( const ExprWrapper< Expr >&expr ) {
+			// NOTE that this argument type should be ExprWrapper< >,
+			// otherwise the following operator=() cannot be
+			// instanciated for SparseLinAlg::LazyIterSolver
+			// which is the derived class of LazyVectorMaker< > .
+			AssignVecExpr< MinusAssignFunctor >()(
+					expr, VecExprTagGrammar()( expr),
+					*this, PTT::Specified()
+			);
 			return *this;
 		}
 
@@ -377,6 +268,74 @@ namespace DenseLinAlg {
 				const Vector & initGuessVec,
 				double convergenceCriterion);
 
+		template < typename AssignType > friend class AssignVecExpr;
+		template < typename AssignType > friend class AssignVector;
+	};
+
+
+	// Function object for lazily assigning
+	// an vector expresion into a vector object
+	template < typename AssignType >
+	struct AssignVecExpr
+	{
+		template < typename Expr >
+		void operator()(
+			const ExprWrapper< Expr >& expr, const VecExprTag&,
+			Vector& lhs,
+			const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& )
+		const
+		{
+			for(int i=0; i < lhs.sz; ++i)
+				AssignType()( lhs.data[i], VecExprGrammar()( expr(i) ) );
+		};
+
+		template < typename Expr >
+		void operator()(
+			const ExprWrapper< Expr >& expr, const VecMapTag&,
+			Vector& lhs,
+			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& )
+		const
+		{
+			#pragma omp parallel for
+			for(int i=0; i < lhs.sz; ++i)
+				AssignType()( lhs.data[i], VecMapGrammar()( expr(i) ) );
+			// std::cout << "skelton for Map, OpenMP " << std::endl;
+		};
+
+		template < typename Expr >
+		void operator()(
+			const ExprWrapper< Expr >& expr, const VecMapReduceTag&,
+			Vector& lhs,
+			const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& )
+		const
+		{
+			#pragma omp parallel for shared( lhs)
+			for(int i=0; i < lhs.sz; ++i)
+				AssignType()( lhs.data[i], VecMapReduceGrammar()( expr(i) ) );
+			// std::cout << "skelton for Map and Reduce, OpenMP " << std::endl;
+		};
+	};
+
+	template < typename AssignType >
+	void AssignVector< AssignType >::operator()(
+		const Vector& rhs, Vector& lhs,
+		const PTT::SingleProcess< PTT::SingleThread< PTT::NoSIMD > >& )
+	const
+	{
+		for(int i=0; i < lhs.sz; ++i)
+			AssignType()( lhs.data[i], rhs.data[i] );
+	};
+
+	template < typename AssignType >
+	void AssignVector< AssignType >::operator()(
+		const Vector& rhs, Vector& lhs,
+		const PTT::SingleProcess< PTT::OpenMP< PTT::NoSIMD > >& )
+	const
+	{
+		#pragma omp parallel for
+		for(int i=0; i < lhs.sz; ++i)
+			AssignType()( lhs.data[i], rhs.data[i] );
+		// std::cout << "skelton Map and Reduce, OpenMP " << std::endl;
 	};
 
 

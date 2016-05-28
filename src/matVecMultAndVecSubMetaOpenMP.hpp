@@ -451,7 +451,7 @@ namespace DenseLinAlg {
 	};
 
 
-	// Primitive transform object for lazily assigning
+	// Function object for lazily assigning
 	// an vector expresion into a vector object
 	template < typename AssignType >
 	struct AssignVecExpr
