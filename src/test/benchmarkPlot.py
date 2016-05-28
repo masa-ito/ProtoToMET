@@ -31,7 +31,7 @@ plt.plot(threadNums, speedMeta,
          label="EDSL")
 plt.plot(threadNums, speedNonMeta, 
          color="red", linewidth=3.0, linestyle="--",
-         marker="+", markersize=10.0,
+         marker="^", markersize=10.0,
          label="Non-OOP")
 
 ax = plt.gca()
