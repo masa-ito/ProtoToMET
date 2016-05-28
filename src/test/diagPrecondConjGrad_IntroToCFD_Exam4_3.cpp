@@ -24,6 +24,8 @@ int main(int argc, char *argv[]) {
 	int NumCtrlVol = 5;
 	if ( argc > 1 ) NumCtrlVol = atoi( argv[1] );
 
+	std::cout << "The num. of grid points = " << NumCtrlVol << std::endl;
+
 	printConstants();
 
 	DLA::Matrix coeffMat( NumCtrlVol, NumCtrlVol, 0.0);

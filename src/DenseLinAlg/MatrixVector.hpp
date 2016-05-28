@@ -93,6 +93,8 @@ namespace DenseLinAlg {
 
 	template < typename AssignType > struct AssignVecExpr;
 
+	// Function object for lazily assigning
+	// an vector object (not expression temaplte) into a vector object
 	template < typename AssignType >
 	struct AssignVector {
 		void operator()(
@@ -316,6 +318,10 @@ namespace DenseLinAlg {
 		};
 	};
 
+
+	// Implementations for
+	// function object for lazily assigning
+	// an vector object (not expression temaplte) into a vector object
 	template < typename AssignType >
 	void AssignVector< AssignType >::operator()(
 		const Vector& rhs, Vector& lhs,
