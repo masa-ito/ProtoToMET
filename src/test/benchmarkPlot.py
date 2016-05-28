@@ -24,22 +24,31 @@ elapsedMeta = [ 2929.45, 1544.96,  838.275,
 speedNonMeta = [ 1000.0 / t for t in elapsedNonMeta ] 
 speedMeta = [ 1000.0 / t for t in elapsedMeta ] 
 
-#plt.plot(X, C, color="blue", linewidth=1.0, linestyle="-")
+threadNumsFromZero = range(0, threadNums[-1]+1)
+speed = [ ( speedNonMeta[0] + speedMeta[0] ) /2.0 * th 
+          for th in threadNumsFromZero ]
+
+#plt.plot(X, C, color="blue", linewidth=1.0, linestyle="--")
 plt.plot(threadNums, speedMeta, 
          color="blue", linewidth=3.0, linestyle="-",
          marker="o", markersize=10.0,
          label="EDSL")
 plt.plot(threadNums, speedNonMeta, 
-         color="red", linewidth=3.0, linestyle="--",
+         color="red", linewidth=3.0, linestyle=":",
          marker="^", markersize=10.0,
          label="Non-OOP")
 
+plt.plot( threadNumsFromZero, speed,
+          color="green", linewidth=3.0, linestyle="--",
+          label="Linear")
+
 ax = plt.gca()
 for label in ax.get_xticklabels() + ax.get_yticklabels():
-    label.set_fontsize(20)
+    label.set_fontsize(24)
     #label.set_bbox(dict(facecolor='white', edgecolor='None', alpha=0.65))
 
-plt.legend(loc='lower right', fontsize=24)
+plt.legend(loc='upper left', fontsize=28)
+#plt.legend(loc='lower right', fontsize=28)
 
 # Set x limits
 #plt.xlim(0.0, 24.0)
@@ -51,7 +60,8 @@ plt.legend(loc='lower right', fontsize=24)
 #plt.ylim(0.000, 0.003)
 
 # Set y ticks
-#plt.yticks([0.000, 0.003, 0.0005])
+plt.yticks([0.0, 2.5, 5.0, 7.5])
+
 
 # Save figure using 72 dots per inch
 plt.savefig("benchmarkPlot20160529.png", dpi=200)
