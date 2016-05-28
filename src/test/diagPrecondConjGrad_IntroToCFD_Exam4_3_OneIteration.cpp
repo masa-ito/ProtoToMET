@@ -70,7 +70,7 @@ void conjugateGradientOneIteration( const DLA::Vector& b,
 	  -20.000 */
 
 	double rho = resid.dot( z);
-	std::cout << "rho" << rho << std::endl;
+	std::cout << "rho = " << rho << std::endl;
 	/* octave:15> rho = resid' * z
 	rho =  14000 */
 
@@ -86,7 +86,7 @@ void conjugateGradientOneIteration( const DLA::Vector& b,
 	   -33.333
 	  -133.333 */
 	double alpha = rho / p.dot(q);
-	std::cout << "alpha" << alpha << std::endl;
+	std::cout << "alpha = " << alpha << std::endl;
 	/* octave:18> alpha = rho / (p' * q )
 	alpha =  1.5366 */
 

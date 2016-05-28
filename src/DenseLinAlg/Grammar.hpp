@@ -25,7 +25,7 @@ namespace DenseLinAlg {
 	// Callable transform object to make a proto exression
 	// for lazily evaluating multiplication
 	struct MatVecMult;
-	struct MatVecMultOmp;
+	// struct MatVecMultOmp;
 
 	// The grammar for the multiplication of a matrix and a vector
 	struct MatVecMultGrammar : proto::or_<
@@ -37,23 +37,13 @@ namespace DenseLinAlg {
 		>
 	> {};
 
-	// For OpenMP
-	struct MatVecMultOmpGrammar : proto::or_<
-		proto::when<
-			proto::multiplies< proto::terminal< Matrix > ,
-								proto::terminal< Vector > >,
-			MatVecMultOmp( proto::_value( proto::_left),
-						proto::_value( proto::_right) )
-		>
-	> {};
-
 
 	// The transformation rule for vector element expressions
 	// This transform accepts a subscript index  of an expression being parsed
 	// as the state variable,and distribute that index over the child nodes.
 
 	// Elemenetwise type expression
-	struct VecElementwiseElmGrammar : proto::or_<
+	struct VecMapElmGrammar : proto::or_<
 		// Vector
 		proto::when< proto::terminal< Vector >,
 					proto::_make_function( proto::_, proto::_state) >,
@@ -89,67 +79,48 @@ namespace DenseLinAlg {
 		>,
 
 		// VecElementwiseElmGrammar +(-) VecElementwiseElmGrammar
-		proto::plus< VecElementwiseElmGrammar, VecElementwiseElmGrammar > ,
-		proto::minus< VecElementwiseElmGrammar, VecElementwiseElmGrammar >
+		proto::plus< VecMapElmGrammar, VecMapElmGrammar > ,
+		proto::minus< VecMapElmGrammar, VecMapElmGrammar >
 	> {};
 
 
 	// Reduction type expression
-	struct VecReductionElmGrammar : proto::or_<
+	struct VecMapReduceElmGrammar : proto::or_<
 		// Matrix * Vector
 		proto::when< MatVecMultGrammar,
 					proto::_make_function( MatVecMultGrammar( proto::_),
 											proto::_state) >,
 
+		// VecMapReduceElmGrammar +(-) VecMapReduceElmGrammar
+		proto::plus< VecMapReduceElmGrammar, VecMapReduceElmGrammar > ,
+		proto::minus< VecMapReduceElmGrammar, VecMapReduceElmGrammar > ,
+
 		// VecReductionElmGrammar +(-) VecElementwiseElmGrammar
-		proto::plus< VecReductionElmGrammar, VecElementwiseElmGrammar > ,
-		proto::minus< VecReductionElmGrammar, VecElementwiseElmGrammar > ,
+		proto::plus< VecMapReduceElmGrammar, VecMapElmGrammar > ,
+		proto::minus< VecMapReduceElmGrammar, VecMapElmGrammar > ,
 
 		// VecElementwiseElmGrammar +(-) VecReductionElmGrammar
-		proto::plus< VecElementwiseElmGrammar, VecReductionElmGrammar > ,
-		proto::minus< VecElementwiseElmGrammar, VecReductionElmGrammar >
-	> {};
-
-	// For OpenMP
-	// Reduction type expression
-	struct VecReductionElmOmpGrammar : proto::or_<
-		// Matrix * Vector
-		proto::when< MatVecMultOmpGrammar,
-					proto::_make_function( MatVecMultOmpGrammar( proto::_),
-											proto::_state) >,
-
-		// VecReductionElmOmpGrammar +(-) VecReductionElmOmpGrammar
-		proto::plus< VecReductionElmOmpGrammar,
-					VecReductionElmOmpGrammar > ,
-		proto::minus< VecReductionElmOmpGrammar,
-					VecReductionElmOmpGrammar >,
-
-		// VecReductionElmOmpGrammar +(-) VecElementwiseElmGrammar
-		proto::plus< VecReductionElmOmpGrammar, VecElementwiseElmGrammar > ,
-		proto::minus< VecReductionElmOmpGrammar, VecElementwiseElmGrammar > ,
-
-		// VecElementwiseElmGrammar +(-) VecReductionElmOmpGrammar
-		proto::plus< VecElementwiseElmGrammar, VecReductionElmOmpGrammar > ,
-		proto::minus< VecElementwiseElmGrammar, VecReductionElmOmpGrammar >
+		proto::plus< VecMapElmGrammar, VecMapReduceElmGrammar > ,
+		proto::minus< VecMapElmGrammar, VecMapReduceElmGrammar >
 	> {};
 
 
 	// The grammar for a vector expression
 	// Elementwise type expresson
-	struct VecElementwiseGrammar : proto::or_<
+	struct VecMapGrammar : proto::or_<
 		// VecElementwiseElmGrammar( index )
 		proto::when<
-			proto::function< VecElementwiseElmGrammar, proto::_ >,
+			proto::function< VecMapElmGrammar, proto::_ >,
 			proto::_default< >(
-				VecElementwiseElmGrammar(proto::_left, proto::_right) )
+				VecMapElmGrammar(proto::_left, proto::_right) )
 		>,
 
 		// Vector
 		proto::terminal< Vector >,
 
-		// VecElementwiseGrammar +(-) VecElementwiseGrammar
-		proto::plus< VecElementwiseGrammar, VecElementwiseGrammar > ,
-		proto::minus< VecElementwiseGrammar, VecElementwiseGrammar >,
+		// VecElementwiseGrammar +(-) VecMapGrammar
+		proto::plus< VecMapGrammar, VecMapGrammar > ,
+		proto::minus< VecMapGrammar, VecMapGrammar >,
 
 		// Vector * double , or double * Vector
 		proto::multiplies< proto::terminal< Vector > ,
@@ -159,67 +130,41 @@ namespace DenseLinAlg {
 
 		// DiagonalMatrix * VecExprGrammar
 		proto::multiplies< proto::terminal< DiagonalMatrix >,
-							VecElementwiseGrammar >
+							VecMapGrammar >
 	> {};
 
 
 	// Reduction type expression
-	struct VecReductionGrammar : proto::or_<
+	struct VecMapReduceGrammar : proto::or_<
 		// VecReductionElmGrammar( index )
 		proto::when<
-			proto::function< VecReductionElmGrammar, proto::_ >,
+			proto::function< VecMapReduceElmGrammar, proto::_ >,
 			proto::_default< >(
-				VecReductionElmGrammar(proto::_left, proto::_right) )
+				VecMapReduceElmGrammar(proto::_left, proto::_right) )
 		>,
 
 		// VecReductionGrammar +(-) VecReductionGrammar
-		proto::plus< VecReductionGrammar, VecReductionGrammar > ,
-		proto::minus< VecReductionGrammar, VecReductionGrammar >,
+		proto::plus< VecMapReduceGrammar, VecMapReduceGrammar > ,
+		proto::minus< VecMapReduceGrammar, VecMapReduceGrammar >,
 
-		// VecReductionGrammar +(-) VecElementwiseGrammar
-		proto::plus< VecReductionGrammar, VecElementwiseGrammar > ,
-		proto::minus< VecReductionGrammar, VecElementwiseGrammar >,
+		// VecReductionGrammar +(-) VecMapGrammar
+		proto::plus< VecMapReduceGrammar, VecMapGrammar > ,
+		proto::minus< VecMapReduceGrammar, VecMapGrammar >,
 
-		// VecElementwiseGrammar +(-) VecReductionGrammar
-		proto::plus< VecElementwiseGrammar, VecReductionGrammar > ,
-		proto::minus< VecElementwiseGrammar, VecReductionGrammar >,
+		// VecMapGrammar +(-) VecReductionGrammar
+		proto::plus< VecMapGrammar, VecMapReduceGrammar > ,
+		proto::minus< VecMapGrammar, VecMapReduceGrammar >,
 
 		// Matrix * Vector
 		MatVecMultGrammar //,
 	> {};
 
-	// For OpenMP
-	// Reduction type expression
-	struct VecReductionOmpGrammar : proto::or_<
-		// VecReductionElmOmpGrammar( index )
-		proto::when<
-			proto::function< VecReductionElmOmpGrammar, proto::_ >,
-			proto::_default< >(
-				VecReductionElmOmpGrammar(proto::_left, proto::_right) )
-		>,
-
-		// VecReductionOmpGrammar +(-) VecReductionOmpGrammar
-		proto::plus< VecReductionOmpGrammar, VecReductionOmpGrammar > ,
-		proto::minus< VecReductionOmpGrammar, VecReductionOmpGrammar >,
-
-		// VecReductionOmpGrammar +(-) VecElementwiseGrammar
-		proto::plus< VecReductionOmpGrammar, VecElementwiseGrammar > ,
-		proto::minus< VecReductionOmpGrammar, VecElementwiseGrammar >,
-
-		// VecElementwiseGrammar +(-) VecReductionOmpGrammar
-		proto::plus< VecElementwiseGrammar, VecReductionOmpGrammar > ,
-		proto::minus< VecElementwiseGrammar, VecReductionOmpGrammar >,
-
-		// Matrix * Vector
-		MatVecMultOmpGrammar //,
-	> {};
-
 
 	// The grammar for a vector expression
 	struct VecExprGrammar : proto::or_<
-		VecElementwiseGrammar,
-		VecReductionGrammar,
-		VecReductionOmpGrammar
+		VecMapGrammar,
+		VecMapReduceGrammar //,
+		// VecReductionOmpGrammar
 	> {};
 
 
@@ -334,6 +279,35 @@ namespace DenseLinAlg {
 		VecExprGrammar,
 		MatExprGrammar,
 		DiagMatExprGrammar
+	> {};
+
+	//
+	// Tag hierarchy of vector expression type tags
+	//
+	struct VecExprTag {};
+	struct VecMapTag : VecExprTag {};
+	// struct VecTermTag : VecMapTag {};
+	struct VecMapReduceTag : VecMapTag {};
+
+	// Meta function returning an instance of Vector expression type tag
+	struct VecExprTagGrammar : proto::or_<
+		proto::when<
+			VecMapReduceGrammar,
+			// proto::_make_function( VecMapReduceTag)
+			VecMapReduceTag()
+		>,
+
+		proto::when<
+			VecMapGrammar,
+			// proto::_make_function( VecMapTag)
+			VecMapTag()
+		>,
+
+		proto::when<
+			VecExprGrammar,
+			// proto::_make_function( VecExprTag)
+			VecExprTag()
+		>
 	> {};
 
 
