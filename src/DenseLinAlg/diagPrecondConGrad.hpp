@@ -19,34 +19,34 @@ namespace DLA = DenseLinAlg;
 // namespace SLA = SparseLinAlg;
 
 // invDiag = inverse matrix of ( diagonal part of coeff )
-inline void makePreconditioner(double * invDiag, double** const coeff, int sz);
+inline void makePreconditioner(double * const invDiag, double** const coeff, int sz);
 
 
 // resid = b - coeff * x
-inline void vecMinusMatMultVec(double* resid,
+inline void vecMinusMatMultVec(double * resid,
 		double * const b, double** const coeff, double * const x, int sz);
 
 // z = invDiag * resid
-inline void precondition( double* z,
+inline void precondition( double * const z,
 		double * const invDiag, double * const resid, int sz);
 
 // p = z
-inline void vectorCopy( double* p, double * const z, int sz);
+inline void vectorCopy( double * const p, double * const z, int sz);
 
 // q = coeff * p
-inline void matMultVec( double* q,
+inline void matMultVec( double * q,
 		double** const coeff, double * const p, int sz);
 
 // dot product of p and q
 inline double dot( double * const p, double * const q, int sz);
 
 // ans = initGuess + alpha * p
-inline void vecPlusScalarMultVec( double * ans,
+inline void vecPlusScalarMultVec( double * const ans,
 		double * const initGuess, double alpha, double * const p, int sz);
 
 
 // ans += alpha * p
-inline void assignAndPlusScalarMultVec( double* ans,
+inline void assignAndPlusScalarMultVec( double * const ans,
 		double alpha, double * const p, int sz);
 
 

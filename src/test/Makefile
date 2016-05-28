@@ -22,8 +22,12 @@ SLA_HEADERS= ../SparseLinAlg/SparseLinAlg.hpp \
  ../SparseLinAlg/IterSolver.hpp \
  ../SparseLinAlg/Preconditioner.hpp 
 
-INCDIR = -I..
-CPP11STD = -std=c++11
+INCDIR= -I..
+CPP11STD= -std=c++11
+OPTIMIZATION= -O3 -Winline \
+ --param max-inline-recursive-depth=32 \
+ --param max-inline-insns-single=2000
+
 
 transformingMatrixVectorMultiplication :  \
  transformingMatrixVectorMultiplication.cpp \
@@ -55,12 +59,12 @@ protoDeepCopyMatrixVectorExpr : protoDeepCopyMatrixVectorExpr.cpp \
 diagPrecondConjGrad_IntroToCFD_Exam4_3 : \
  diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp airCooledCylinder.hpp \
  ${DLA_HEADERS} ${SLA_HEADERS}
-	${CXX} ${CPP11STD} ${INCDIR} -O3 -Winline $< -o $@
+	${CXX} ${CPP11STD} ${INCDIR} ${OPTIMIZATION} $< -o $@
 
 diagPrecondConjGrad_IntroToCFD_Exam4_3_metaOpenMP : \
  diagPrecondConjGrad_IntroToCFD_Exam4_3.cpp airCooledCylinder.hpp \
  ${DLA_HEADERS} ${SLA_HEADERS}
-	${CXX} ${CPP11STD} ${INCDIR} -O3 -fopenmp -Winline $< -o $@	
+	${CXX} ${CPP11STD} ${INCDIR} ${OPTIMIZATION} -fopenmp $< -o $@	
 
 diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration : \
  diagPrecondConjGrad_IntroToCFD_Exam4_3_OneIteration.cpp \
@@ -76,13 +80,13 @@ diagPrecondConjGrad_IntroToCFD_Exam4_3_plainC : \
  diagPrecondConjGrad_IntroToCFD_Exam4_3_plainC.cpp \
  ../DenseLinAlg/diagPrecondConGrad_plainC.o \
  ${DLA_HEADERS} ${SLA_HEADERS}
-	${CXX} ${CPP11STD} ${INCDIR} -O3 -Winline $< \
+	${CXX} ${CPP11STD} ${INCDIR} ${OPTIMIZATION} $< \
 	../DenseLinAlg/diagPrecondConGrad_plainC.o -o $@
 
 diagPrecondConjGrad_IntroToCFD_Exam4_3_nonMetaOpenMP : \
  diagPrecondConjGrad_IntroToCFD_Exam4_3_plainC.cpp \
  ../DenseLinAlg/diagPrecondConGrad_nonMetaOpenMP.o \
  ${DLA_HEADERS} ${SLA_HEADERS}
-	${CXX} ${CPP11STD} ${INCDIR} -O3 -Winline -fopenmp $< \
+	${CXX} ${CPP11STD} ${INCDIR} ${OPTIMIZATION} -fopenmp $< \
 	../DenseLinAlg/diagPrecondConGrad_nonMetaOpenMP.o -o $@
 

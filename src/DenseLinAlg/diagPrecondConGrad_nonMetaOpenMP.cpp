@@ -9,7 +9,7 @@
 
 
 // invDiag = inverse matrix of ( diagonal part of coeff )
-inline void makePreconditioner(double * invDiag, double** const coeff, int sz)
+inline void makePreconditioner(double * const invDiag, double** const coeff, int sz)
 {
 	#pragma omp parallel for
 	for (int i = 0; i < sz ; i++) invDiag[i] = 1.0 / coeff[i][i];
@@ -19,16 +19,23 @@ inline void makePreconditioner(double * invDiag, double** const coeff, int sz)
 inline void vecMinusMatMultVec(double* resid,
 		double * const b, double** const coeff, double * const x, int sz)
 {
-	for (int ri = 0; ri < sz; ri++) {
-		double p = coeff[ri][0] * x[0];
-		#pragma omp parallel for reduction (+:p)
-		for (int ci = 1; ci  < sz; ci++) p += coeff[ri][ci] * x[ci];
-		resid[ri] = b[ri] - p;
+	int ri, ci;
+	double matVec;
+
+	#pragma omp parallel for \
+	 	 	 private( ri, ci, matVec) shared( sz, resid)
+	// double * const resid cannot be put in to share( ).
+	// http://stackoverflow.com/questions/13199398/
+	//            openmp-predetermined-shared-for-shared
+	for (ri = 0; ri < sz; ri++) {
+		matVec = coeff[ri][0] * x[0];
+		for (ci = 1; ci  < sz; ci++) matVec += coeff[ri][ci] * x[ci];
+		resid[ri] = b[ri] - matVec;
 	}
 }
 
 // z = invDiag * resid
-inline void precondition( double* z,
+inline void precondition( double * const z,
 		double * const invDiag, double * const resid, int sz)
 {
 	#pragma omp parallel for
@@ -36,26 +43,28 @@ inline void precondition( double* z,
 }
 
 // p = z
-inline void vectorCopy( double* p, double * const z, int sz)
+inline void vectorCopy( double * const p, double * const z, int sz)
 {
 	#pragma omp parallel for
 	for (int ri = 0; ri < sz; ri++) p[ri] = z[ri];
 }
 
 // q = coeff * p
-inline void matMultVec( double* q,
+inline void matMultVec( double * q,
 		double** const coeff, double * const p, int sz)
 {
-	// #pragma omp parallel for
-	// for (int ri = 0; ri < sz; ri++)	q[ri] = coeff[ri][0] * p[0];
+	int ri, ci;
+	double matVec;
 
-	for (int ri = 0; ri < sz; ri++) {
-		double qri = coeff[ri][0] * p[0];
-
-		#pragma omp parallel for reduction (+:qri)
-		for (int ci = 1; ci < sz; ci++)	qri += coeff[ri][ci] * p[ci];
-
-		q[ri] = qri;
+	#pragma omp parallel for default(none) \
+	            private( ri, ci, matVec) shared( sz, q)
+	// double * const q cannot be put into shared( ).
+	// http://stackoverflow.com/questions/13199398/
+	//            openmp-predetermined-shared-for-shared
+	for (ri = 0; ri < sz; ri++) {
+		matVec = coeff[ri][0] * p[0];
+		for (ci = 1; ci < sz; ci++)	matVec += coeff[ri][ci] * p[ci];
+		q[ri] = matVec;
 	}
 }
 
@@ -69,7 +78,7 @@ inline double dot( double * const p, double * const q, int sz)
 }
 
 // ans = initGuess + alpha * p
-inline void vecPlusScalarMultVec( double * ans,
+inline void vecPlusScalarMultVec( double * const ans,
 		double * const initGuess, double alpha, double * const p, int sz)
 {
 	#pragma omp parallel for
@@ -77,7 +86,7 @@ inline void vecPlusScalarMultVec( double * ans,
 }
 
 // ans += alpha * p
-inline void assignAndPlusScalarMultVec( double* ans,
+inline void assignAndPlusScalarMultVec( double* const ans,
 		double alpha, double * const p, int sz)
 {
 	#pragma omp parallel for
